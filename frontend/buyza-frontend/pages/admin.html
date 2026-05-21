@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de administracion - Buyza</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <style>
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      border: 1px solid var(--gray-200);
+      transition: var(--transition);
+      animation: fadeUp 0.5s ease forwards;
+      opacity: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+    }
+
+    .stat-card.purple::before { background: linear-gradient(90deg, #6c63ff, #574fd6); }
+    .stat-card.green::before  { background: linear-gradient(90deg, #22c55e, #16a34a); }
+    .stat-card.yellow::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
+    .stat-card.red::before    { background: linear-gradient(90deg, #ef4444, #dc2626); }
+    .stat-card.blue::before   { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+    .stat-card.pink::before   { background: linear-gradient(90deg, #ec4899, #db2777); }
+
+    .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); }
+
+    .stat-card:nth-child(1) { animation-delay: 0.05s; }
+    .stat-card:nth-child(2) { animation-delay: 0.10s; }
+    .stat-card:nth-child(3) { animation-delay: 0.15s; }
+    .stat-card:nth-child(4) { animation-delay: 0.20s; }
+    .stat-card:nth-child(5) { animation-delay: 0.25s; }
+    .stat-card:nth-child(6) { animation-delay: 0.30s; }
+
+    .stat-icon {
+      width: 42px; height: 42px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    .stat-icon.purple { background: #ede9ff; }
+    .stat-icon.green  { background: #dcfce7; }
+    .stat-icon.yellow { background: #fef9c3; }
+    .stat-icon.red    { background: #fee2e2; }
+    .stat-icon.blue   { background: #dbeafe; }
+    .stat-icon.pink   { background: #fce7f3; }
+    .stat-icon svg { width: 20px; height: 20px; }
+
+    .stat-number {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+
+    .stat-number.purple { color: #6c63ff; }
+    .stat-number.green  { color: #22c55e; }
+    .stat-number.yellow { color: #f59e0b; }
+    .stat-number.red    { color: #ef4444; }
+    .stat-number.blue   { color: #3b82f6; }
+    .stat-number.pink   { color: #ec4899; }
+
+    .stat-title { font-size: 0.82rem; font-weight: 600; color: var(--gray-600); margin-bottom: 0.25rem; }
+    .stat-sub   { font-size: 0.75rem; color: var(--gray-400); }
+
+    .progress-bar-wrapper { margin-top: 0.75rem; }
+    .progress-bar-bg { height: 5px; background: var(--gray-200); border-radius: 99px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 99px; transition: width 1s ease; }
+    .progress-bar-fill.purple { background: #6c63ff; }
+    .progress-bar-fill.green  { background: #22c55e; }
+    .progress-bar-fill.yellow { background: #f59e0b; }
+    .progress-bar-fill.red    { background: #ef4444; }
+    .progress-bar-fill.blue   { background: #3b82f6; }
+    .progress-bar-fill.pink   { background: #ec4899; }
+
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 768px) { .charts-row { grid-template-columns: 1fr; } }
+
+    .chart-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      border: 1px solid var(--gray-200);
+      animation: fadeUp 0.5s ease 0.3s forwards;
+      opacity: 0;
+    }
+    .chart-card h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--dark); }
+
+    .bar-chart { display: flex; flex-direction: column; gap: 0.75rem; }
+    .bar-row { display: flex; align-items: center; gap: 0.75rem; }
+    .bar-label { font-size: 0.8rem; font-weight: 600; color: var(--gray-600); width: 90px; flex-shrink: 0; }
+    .bar-track { flex: 1; height: 28px; background: var(--gray-100); border-radius: 8px; overflow: hidden; position: relative; }
+    .bar-fill { height: 100%; border-radius: 8px; display: flex; align-items: center; padding-left: 0.75rem; font-size: 0.78rem; font-weight: 700; color: white; transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1); min-width: 40px; }
+
+    .donut-wrapper { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .donut-chart { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
+    .donut-chart svg { transform: rotate(-90deg); }
+    .donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .donut-center-num { font-size: 1.6rem; font-weight: 800; letter-spacing: -1px; color: var(--dark); }
+    .donut-center-label { font-size: 0.65rem; color: var(--gray-400); font-weight: 500; }
+    .donut-legend { display: flex; flex-direction: column; gap: 0.6rem; flex: 1; }
+    .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .legend-name { color: var(--gray-600); flex: 1; }
+    .legend-val  { font-weight: 700; color: var(--dark); }
+
+    .table-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .filter-btn { padding: 0.4rem 1rem; border-radius: 50px; border: 1.5px solid var(--gray-200); background: transparent; font-size: 0.8rem; font-weight: 600; color: var(--gray-600); cursor: pointer; transition: var(--transition); font-family: 'Inter', sans-serif; }
+    .filter-btn:hover, .filter-btn.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+
+    .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; animation: fadeUp 0.4s ease forwards; }
+    .page-header h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -1px; }
+    .page-header p { color: var(--gray-600); margin-top: 0.3rem; font-size: 0.9rem; }
+
+    .admin-badge { background: var(--primary-light); color: var(--primary); padding: 0.4rem 1rem; border-radius: 50px; font-size: 0.8rem; font-weight: 700; }
+
+    /* Seccion creditos */
+    .seccion-creditos {
+      margin-top: 2rem;
+    }
+    .seccion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .seccion-header h3 { font-size: 1rem; font-weight: 700; }
+
+    .cupo-bar-bg { height: 6px; background: var(--gray-200); border-radius: 99px; overflow: hidden; margin-top: 4px; }
+    .cupo-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #6c63ff, #574fd6); transition: width 1s ease; }
+
+    /* Modal ajuste cupo */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(4px); }
+    .modal-overlay.show { display: flex; }
+    .modal { background: white; border-radius: var(--radius); padding: 2rem; width: 100%; max-width: 400px; animation: fadeUp 0.3s ease forwards; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .modal-header h3 { font-size: 1.1rem; font-weight: 700; }
+    .modal-close { background: var(--gray-100); border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+    .modal-close:hover { background: var(--gray-200); }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">Buyza</a>
+  <div class="navbar-links">
+    <span class="nav-link" id="saludo"></span>
+    <span class="admin-badge">Administrador</span>
+    <a href="#" onclick="cerrarSesion()" class="btn-nav">Cerrar sesion</a>
+  </div>
+</nav>
+
+<div style="padding: 100px 2rem 3rem; max-width: 1200px; margin: 0 auto;">
+
+  <div class="page-header">
+    <div>
+      <h1>Panel de administracion</h1>
+      <p id="fechaHoy"></p>
+    </div>
+    <button onclick="cargarTodo()" class="btn btn-outline" style="padding:0.6rem 1.3rem; font-size:0.85rem">
+      Actualizar datos
+    </button>
+  </div>
+
+  <div id="alerta" class="alert"></div>
+
+  <!-- Estadisticas -->
+  <div class="dashboard-grid">
+    <div class="stat-card purple">
+      <div class="stat-icon purple">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#6c63ff" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div class="stat-number purple" id="statTotal">0</div>
+      <div class="stat-title">Total de usuarios</div>
+      <div class="stat-sub">Registrados en la plataforma</div>
+      <div class="progress-bar-wrapper"><div class="progress-bar-bg"><div class="progress-bar-fill purple" id="barTotal" style="width:0%"></div></div></div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <div class="stat-number green" id="statActivos">0</div>
+      <div class="stat-title">Usuarios activos</div>
+      <div class="stat-sub" id="subActivos">Del total registrado</div>
+      <div class="progress-bar-wrapper"><div class="progress-bar-bg"><div class="progress-bar-fill green" id="barActivos" style="width:0%"></div></div></div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-icon yellow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div class="stat-number yellow" id="statPendientes">0</div>
+      <div class="stat-title">Pendientes de aprobacion</div>
+      <div class="stat-sub">Vendedores esperando revision</div>
+      <div class="progress-bar-wrapper"><div class="progress-bar-bg"><div class="progress-bar-fill yellow" id="barPendientes" style="width:0%"></div></div></div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-icon red">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      </div>
+      <div class="stat-number red" id="statRechazados">0</div>
+      <div class="stat-title">Rechazados</div>
+      <div class="stat-sub">Cuentas no aprobadas</div>
+      <div class="progress-bar-wrapper"><div class="progress-bar-bg"><div class="progress-bar-fill red" id="barRechazados" style="width:0%"></div></div></div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-icon blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      </div>
+      <div class="stat-number blue" id="statCompradores">0</div>
+      <div class="stat-title">Compradores</div>
+      <div class="stat-sub">Cuentas tipo comprador</div>
+      <div class="progress-bar-wrapper"><div class="progress-bar-bg"><div class="progress-bar-fill blue" id="barCompradores" style="width:0%"></div></div></div>
+    </div>
+    <div class="stat-card pink">
+      <div class="stat-icon pink">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div class="stat-number pink" id="statVendedores">0</div>
+      <div class="stat-title">Vendedores</div>
+      <div class="stat-sub">Cuentas tipo vendedor</div>
+      <div class="progress-bar-wrapper"><div class="progress-bar-bg"><div class="progress-bar-fill pink" id="barVendedores" style="width:0%"></div></div></div>
+    </div>
+  </div>
+
+  <!-- Graficas -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <h4>Distribucion por tipo de cuenta</h4>
+      <div class="bar-chart" id="barChart"></div>
+    </div>
+    <div class="chart-card">
+      <h4>Estado general de usuarios</h4>
+      <div class="donut-wrapper">
+        <div class="donut-chart">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#f3f4f6" stroke-width="16"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#22c55e" stroke-width="16" stroke-dasharray="314" id="donutActivo" stroke-dashoffset="314" style="transition: stroke-dashoffset 1.2s ease"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#f59e0b" stroke-width="16" stroke-dasharray="314" id="donutPendiente" stroke-dashoffset="314" style="transition: stroke-dashoffset 1.2s ease 0.2s"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#ef4444" stroke-width="16" stroke-dasharray="314" id="donutRechazado" stroke-dashoffset="314" style="transition: stroke-dashoffset 1.2s ease 0.4s"/>
+          </svg>
+          <div class="donut-center">
+            <div class="donut-center-num" id="donutTotal">0</div>
+            <div class="donut-center-label">usuarios</div>
+          </div>
+        </div>
+        <div class="donut-legend" id="donutLegend"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla usuarios -->
+  <div class="card" style="max-width:100%; padding: 1.75rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.75rem">
+      <h3 style="font-weight:700; font-size:1rem">Usuarios registrados</h3>
+      <input type="text" id="buscador" class="form-control" placeholder="Buscar por nombre o correo..."
+        style="max-width:260px; padding:0.5rem 0.9rem; font-size:0.85rem" oninput="filtrarTabla()">
+    </div>
+    <div class="table-filters">
+      <button class="filter-btn active" onclick="setFiltro('todos', this)">Todos</button>
+      <button class="filter-btn" onclick="setFiltro('comprador', this)">Compradores</button>
+      <button class="filter-btn" onclick="setFiltro('vendedor', this)">Vendedores</button>
+      <button class="filter-btn" onclick="setFiltro('pendiente', this)">Pendientes</button>
+      <button class="filter-btn" onclick="setFiltro('rechazado', this)">Rechazados</button>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Registro</th><th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaUsuarios">
+          <tr><td colspan="7" style="text-align:center; color:var(--gray-400); padding:2rem">Cargando usuarios...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== SECCION CREDITOS ===== -->
+  <div class="seccion-creditos">
+    <div class="card" style="max-width:100%; padding:1.75rem;">
+      <div class="seccion-header">
+        <div>
+          <h3 style="font-weight:700; font-size:1rem">Creditos de compradores</h3>
+          <p style="font-size:0.82rem; color:var(--gray-500); margin-top:0.2rem">Cupo asignado, disponible y compras completadas por usuario</p>
+        </div>
+        <button onclick="cargarCreditos()" class="btn btn-outline" style="padding:0.5rem 1rem; font-size:0.82rem">
+          Actualizar
+        </button>
+      </div>
+      <div id="alertaCredito" class="alert"></div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Correo</th>
+              <th>Cupo total</th>
+              <th>Cupo disponible</th>
+              <th>Cupo usado</th>
+              <th>Compras</th>
+              <th>Ajustar cupo</th>
+            </tr>
+          </thead>
+          <tbody id="tablaCreditos">
+            <tr><td colspan="8" style="text-align:center; color:var(--gray-400); padding:2rem">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal ajustar cupo -->
+<div class="modal-overlay" id="modalCupo">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Ajustar cupo</h3>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+    <div id="alertaModal" class="alert"></div>
+    <p style="font-size:0.88rem; color:var(--gray-600); margin-bottom:1.25rem">
+      Usuario: <strong id="modalNombreUsuario"></strong>
+    </p>
+    <div class="form-group">
+      <label class="form-label">Nuevo cupo total</label>
+      <input type="number" class="form-control" id="inputNuevoCupo" placeholder="Ej: 300000" min="50000" step="50000">
+      <small style="color:var(--gray-400); font-size:0.78rem">El cupo disponible se actualizara al mismo valor</small>
+    </div>
+    <div style="display:flex; gap:0.75rem; margin-top:1.25rem">
+      <button onclick="cerrarModal()" class="btn btn-outline btn-full">Cancelar</button>
+      <button onclick="confirmarAjuste()" class="btn btn-primary btn-full" id="btnConfirmarAjuste">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ CARGAR CONFIG PRIMERO -->
+<script src="../js/config.js"></script>
+<!-- ✅ DESPUÉS CARGAR API.JS -->
+<script src="../js/api.js"></script>
+<script>
+  const usuario = getUsuario();
+  if (!usuario || usuario.rol !== 'admin') {
+    window.location.href = 'login.html';
+  } else {
+    document.getElementById('saludo').textContent = `Hola, ${usuario.nombre}`;
+  }
+
+  document.getElementById('fechaHoy').textContent = new Date().toLocaleDateString('es-CO', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  const rolBadge = {
+    comprador: '<span class="badge badge-buyer">Comprador</span>',
+    vendedor:  '<span class="badge badge-seller">Vendedor</span>',
+    admin:     '<span class="badge badge-admin">Admin</span>'
+  };
+  const estadoBadge = {
+    activo:    '<span class="badge badge-active">Activo</span>',
+    pendiente: '<span class="badge badge-pending">Pendiente</span>',
+    rechazado: '<span class="badge badge-rejected">Rechazado</span>'
+  };
+
+  let todosLosUsuarios = [];
+  let filtroActual = 'todos';
+  let usuarioAjusteId = null;
+
+  function actualizarEstadisticas(usuarios) {
+    const total       = usuarios.length;
+    const activos     = usuarios.filter(u => u.estado === 'activo').length;
+    const pendientes  = usuarios.filter(u => u.estado === 'pendiente').length;
+    const rechazados  = usuarios.filter(u => u.estado === 'rechazado').length;
+    const compradores = usuarios.filter(u => u.rol === 'comprador').length;
+    const vendedores  = usuarios.filter(u => u.rol === 'vendedor').length;
+
+    document.getElementById('statTotal').textContent       = total;
+    document.getElementById('statActivos').textContent     = activos;
+    document.getElementById('statPendientes').textContent  = pendientes;
+    document.getElementById('statRechazados').textContent  = rechazados;
+    document.getElementById('statCompradores').textContent = compradores;
+    document.getElementById('statVendedores').textContent  = vendedores;
+    document.getElementById('subActivos').textContent =
+      total > 0 ? `${Math.round((activos/total)*100)}% del total registrado` : 'Del total registrado';
+
+    setTimeout(() => {
+      const pct = (n) => total > 0 ? Math.round((n/total)*100) : 0;
+      document.getElementById('barTotal').style.width       = '100%';
+      document.getElementById('barActivos').style.width     = pct(activos) + '%';
+      document.getElementById('barPendientes').style.width  = pct(pendientes) + '%';
+      document.getElementById('barRechazados').style.width  = pct(rechazados) + '%';
+      document.getElementById('barCompradores').style.width = pct(compradores) + '%';
+      document.getElementById('barVendedores').style.width  = pct(vendedores) + '%';
+    }, 200);
+
+    const barData = [
+      { label: 'Compradores', value: compradores, color: '#3b82f6' },
+      { label: 'Vendedores',  value: vendedores,  color: '#ec4899' },
+      { label: 'Admins',      value: usuarios.filter(u => u.rol === 'admin').length, color: '#6c63ff' }
+    ];
+    const maxVal = Math.max(...barData.map(d => d.value), 1);
+    document.getElementById('barChart').innerHTML = barData.map(d => `
+      <div class="bar-row">
+        <div class="bar-label">${d.label}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:0%; background:${d.color}" data-w="${Math.round((d.value/maxVal)*100)}%">${d.value}</div>
+        </div>
+      </div>
+    `).join('');
+    setTimeout(() => {
+      document.querySelectorAll('.bar-fill').forEach(el => { el.style.width = el.dataset.w; });
+    }, 300);
+
+    const circumference = 314;
+    document.getElementById('donutTotal').textContent = total;
+    setTimeout(() => {
+      document.getElementById('donutActivo').style.strokeDashoffset    = circumference * (1 - (total > 0 ? activos/total : 0));
+      document.getElementById('donutPendiente').style.strokeDashoffset = circumference * (1 - (total > 0 ? pendientes/total : 0));
+      document.getElementById('donutRechazado').style.strokeDashoffset = circumference * (1 - (total > 0 ? rechazados/total : 0));
+    }, 300);
+
+    document.getElementById('donutLegend').innerHTML = [
+      { color: '#22c55e', label: 'Activos',    val: activos },
+      { color: '#f59e0b', label: 'Pendientes', val: pendientes },
+      { color: '#ef4444', label: 'Rechazados', val: rechazados }
+    ].map(d => `
+      <div class="legend-item">
+        <div class="legend-dot" style="background:${d.color}"></div>
+        <span class="legend-name">${d.label}</span>
+        <span class="legend-val">${d.val}</span>
+      </div>
+    `).join('');
+  }
+
+  function renderTabla(usuarios) {
+    const tbody = document.getElementById('tablaUsuarios');
+    if (!usuarios.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--gray-400); padding:2rem">No se encontraron usuarios</td></tr>';
+      return;
+    }
+    tbody.innerHTML = usuarios.map(u => `
+      <tr>
+        <td><strong>#${u.id}</strong></td>
+        <td>${u.nombre}</td>
+        <td style="color:var(--gray-600); font-size:0.85rem">${u.email}</td>
+        <td>${rolBadge[u.rol] || u.rol}</td>
+        <td>${estadoBadge[u.estado] || u.estado}</td>
+        <td style="color:var(--gray-600); font-size:0.82rem">
+          ${new Date(u.fecha_registro).toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' })}
+        </td>
+        <td>
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap">
+            ${u.rol !== 'admin' ? `
+              ${u.estado !== 'activo'    ? `<button onclick="cambiarEstado(${u.id},'activo')"    class="btn btn-success" style="padding:0.3rem 0.8rem; font-size:0.78rem">Aprobar</button>` : ''}
+              ${u.estado !== 'pendiente' ? `<button onclick="cambiarEstado(${u.id},'pendiente')" class="btn btn-warning" style="padding:0.3rem 0.8rem; font-size:0.78rem">Pendiente</button>` : ''}
+              ${u.estado !== 'rechazado' ? `<button onclick="cambiarEstado(${u.id},'rechazado')" class="btn btn-danger"  style="padding:0.3rem 0.8rem; font-size:0.78rem">Rechazar</button>` : ''}
+              <button onclick="eliminarUsuario(${u.id})" class="btn" style="padding:0.3rem 0.8rem; font-size:0.78rem; background:var(--gray-200); color:var(--gray-600)">Eliminar</button>
+            ` : '<span style="color:var(--gray-400); font-size:0.82rem">Sin acciones</span>'}
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function setFiltro(filtro, btn) {
+    filtroActual = filtro;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filtrarTabla();
+  }
+
+  function filtrarTabla() {
+    const busqueda = document.getElementById('buscador').value.toLowerCase();
+    let resultado = todosLosUsuarios;
+    if (filtroActual === 'comprador')  resultado = resultado.filter(u => u.rol === 'comprador');
+    if (filtroActual === 'vendedor')   resultado = resultado.filter(u => u.rol === 'vendedor');
+    if (filtroActual === 'pendiente')  resultado = resultado.filter(u => u.estado === 'pendiente');
+    if (filtroActual === 'rechazado')  resultado = resultado.filter(u => u.estado === 'rechazado');
+    if (busqueda) resultado = resultado.filter(u => u.nombre.toLowerCase().includes(busqueda) || u.email.toLowerCase().includes(busqueda));
+    renderTabla(resultado);
+  }
+
+  // ===== CREDITOS =====
+  async function cargarCreditos() {
+    const compradores = todosLosUsuarios.filter(u => u.rol === 'comprador');
+    if (!compradores.length) {
+      document.getElementById('tablaCreditos').innerHTML =
+        '<tr><td colspan="8" style="text-align:center; color:var(--gray-400); padding:2rem">No hay compradores registrados</td></tr>';
+      return;
+    }
+
+    document.getElementById('tablaCreditos').innerHTML =
+      '<tr><td colspan="8" style="text-align:center; color:var(--gray-400); padding:2rem">Cargando creditos...</td></tr>';
+
+    const resultados = await Promise.allSettled(
+      compradores.map(u => api.get(`/usuario/${u.id}`, 'http://192.168.100.2:3005/api/credito'))
+    );
+
+    const filas = compradores.map((u, i) => {
+      const res = resultados[i];
+      if (res.status === 'rejected' || res.value?.error) {
+        return `<tr>
+          <td><strong>#${u.id}</strong></td>
+          <td>${u.nombre}</td>
+          <td style="font-size:0.82rem; color:var(--gray-500)">${u.email}</td>
+          <td colspan="4" style="color:var(--gray-400); font-size:0.82rem">Sin datos de credito</td>
+          <td><button onclick="abrirModalCupo(${u.id}, '${u.nombre}')" class="btn btn-primary" style="padding:0.3rem 0.9rem; font-size:0.78rem">Ajustar</button></td>
+        </tr>`;
+      }
+      const c = res.value;
+      const pct = c.cupo_total > 0 ? Math.round((c.cupo_usado / c.cupo_total) * 100) : 0;
+      return `<tr>
+        <td><strong>#${c.id}</strong></td>
+        <td>${c.nombre}</td>
+        <td style="font-size:0.82rem; color:var(--gray-500)">${c.email}</td>
+        <td style="font-weight:700">${formatPeso(c.cupo_total)}</td>
+        <td style="color:#22c55e; font-weight:700">${formatPeso(c.cupo_disponible)}</td>
+        <td>
+          <div style="min-width:80px">
+            <span style="font-weight:600; color:#ef4444">${formatPeso(c.cupo_usado)}</span>
+            <div class="cupo-bar-bg"><div class="cupo-bar-fill" style="width:${pct}%"></div></div>
+          </div>
+        </td>
+        <td><span class="badge badge-active">${c.compras_completadas}</span></td>
+        <td>
+          <button onclick="abrirModalCupo(${c.id}, '${c.nombre}')" class="btn btn-primary" style="padding:0.3rem 0.9rem; font-size:0.78rem">
+            Ajustar cupo
+          </button>
+        </td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('tablaCreditos').innerHTML = filas;
+  }
+
+  function abrirModalCupo(id, nombre) {
+    usuarioAjusteId = id;
+    document.getElementById('modalNombreUsuario').textContent = nombre;
+    document.getElementById('inputNuevoCupo').value = '';
+    document.getElementById('alertaModal').className = 'alert';
+    document.getElementById('modalCupo').classList.add('show');
+  }
+
+  function cerrarModal() {
+    document.getElementById('modalCupo').classList.remove('show');
+    usuarioAjusteId = null;
+  }
+
+  async function confirmarAjuste() {
+    const cupo_total = parseFloat(document.getElementById('inputNuevoCupo').value);
+    if (!cupo_total || cupo_total < 50000) {
+      mostrarAlerta('alertaModal', 'El cupo minimo es $50.000', 'error'); return;
+    }
+    const btn = document.getElementById('btnConfirmarAjuste');
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    try {
+      const res = await api.put(`/usuario/${usuarioAjusteId}/ajustar`, { cupo_total }, 'http://192.168.100.2:3005/api/credito');
+      if (res.error) throw new Error(res.error);
+      cerrarModal();
+      mostrarAlerta('alertaCredito', res.mensaje || 'Cupo ajustado correctamente', 'success');
+      cargarCreditos();
+    } catch (err) {
+      mostrarAlerta('alertaModal', err.message, 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Confirmar';
+    }
+  }
+
+  async function cargarTodo() {
+    try {
+      const listaUsuarios = await usuarios.get('');
+      if (!Array.isArray(listaUsuarios)) { mostrarAlerta('alerta', 'Error al cargar usuarios', 'error'); return; }
+      todosLosUsuarios = listaUsuarios;
+      actualizarEstadisticas(listaUsuarios);
+      filtrarTabla();
+      cargarCreditos();
+    } catch {
+      mostrarAlerta('alerta', 'No se pudo conectar con el servidor', 'error');
+    }
+  }
+
+  async function cambiarEstado(id, estado) {
+    const res = await usuarios.put(`/${id}/estado`, { estado });
+    if (res.mensaje) { mostrarAlerta('alerta', res.mensaje, 'success'); cargarTodo(); }
+    else mostrarAlerta('alerta', res.error || 'Error al actualizar', 'error');
+  }
+
+  async function eliminarUsuario(id) {
+    if (!confirm('Esta seguro de eliminar este usuario? Esta accion no se puede deshacer.')) return;
+    const res = await usuarios.delete(`/${id}`);
+    if (res.mensaje) { mostrarAlerta('alerta', res.mensaje, 'success'); cargarTodo(); }
+    else mostrarAlerta('alerta', res.error || 'Error al eliminar', 'error');
+  }
+
+  cargarTodo();
+</script>
+</body>
+</html>

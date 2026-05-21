@@ -1,0 +1,183 @@
+version: "3.8"
+networks:
+  buyza-net:
+    driver: overlay
+volumes:
+  data-usuarios:
+  data-catalogo:
+  data-ordenes:
+  data-pagos:
+  data-credito:
+services:
+  db-usuarios:
+    image: mysql:8.0
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: buyza_usuarios
+    volumes:
+      - data-usuarios:/var/lib/mysql
+    networks:
+      - buyza-net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  db-catalogo:
+    image: mysql:8.0
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: buyza_catalogo
+    volumes:
+      - data-catalogo:/var/lib/mysql
+    networks:
+      - buyza-net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  db-ordenes:
+    image: mysql:8.0
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: buyza_ordenes
+    volumes:
+      - data-ordenes:/var/lib/mysql
+    networks:
+      - buyza-net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  db-pagos:
+    image: mysql:8.0
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: buyza_pagos
+    volumes:
+      - data-pagos:/var/lib/mysql
+    networks:
+      - buyza-net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  db-credito:
+    image: mysql:8.0
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: buyza_credito
+    volumes:
+      - data-credito:/var/lib/mysql
+    networks:
+      - buyza-net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+  ms-usuarios:
+    image: buyza/ms-usuarios:latest
+    environment:
+      DB_HOST: db-usuarios
+      DB_USER: root
+      DB_PASS: ""
+      DB_NAME: buyza_usuarios
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    networks:
+      - buyza-net
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
+  ms-catalogo:
+    image: buyza/ms-catalogo:latest
+    environment:
+      DB_HOST: db-catalogo
+      DB_USER: root
+      DB_PASS: ""
+      DB_NAME: buyza_catalogo
+      PORT: 3002
+    ports:
+      - "3002:3002"
+    networks:
+      - buyza-net
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
+  ms-ordenes:
+    image: buyza/ms-ordenes:latest
+    environment:
+      DB_HOST: db-ordenes
+      DB_USER: root
+      DB_PASS: ""
+      DB_NAME: buyza_ordenes
+      URL_CATALOGO: http://ms-catalogo:3002
+      URL_PAGOS: http://ms-pagos:3004
+      PORT: 3003
+    ports:
+      - "3003:3003"
+    networks:
+      - buyza-net
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
+  ms-pagos:
+    image: buyza/ms-pagos:latest
+    environment:
+      DB_HOST: db-pagos
+      DB_USER: root
+      DB_PASS: ""
+      DB_NAME: buyza_pagos
+      PORT: 3004
+    ports:
+      - "3004:3004"
+    networks:
+      - buyza-net
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
+  ms-credito:
+    image: buyza/ms-credito:latest
+    environment:
+      DB_HOST: db-credito
+      DB_USER: root
+      DB_PASS: ""
+      DB_NAME: buyza_credito
+      PORT: 3005
+    ports:
+      - "3005:3005"
+    networks:
+      - buyza-net
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
+  frontend:
+    image: buyza/frontend:latest
+    ports:
+      - "80:80"
+    networks:
+      - buyza-net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure

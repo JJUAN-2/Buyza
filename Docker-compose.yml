@@ -1,0 +1,154 @@
+services:
+  db-usuarios:
+    image: mysql:8.0
+    container_name: db_usuarios
+    restart: always
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: buyza_usuarios
+    ports:
+      - "3311:3306"
+
+  db-catalogo:
+    image: mysql:8.0
+    container_name: db_catalogo
+    restart: always
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: buyza_catalogo
+    ports:
+      - "3312:3306"
+
+  db-ordenes:
+    image: mysql:8.0
+    container_name: db_ordenes
+    restart: always
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: buyza_ordenes
+    ports:
+      - "3313:3306"
+
+  db-pagos:
+    image: mysql:8.0
+    container_name: db_pagos
+    restart: always
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: buyza_pagos
+    ports:
+      - "3314:3306"
+
+  db-credito:
+    image: mysql:8.0
+    container_name: db_credito
+    restart: always
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: buyza_credito
+    ports:
+      - "3315:3306"
+
+  ms-usuarios:
+    build: ./microservicio-usuarios
+    container_name: ms_usuarios
+    depends_on:
+      - db-usuarios
+    environment:
+      DB_HOST: db-usuarios
+      DB_USER: root
+      DB_PASS: ""
+      DB_NAME: buyza_usuarios
+      PORT: 3001
+      JWT_SECRET: PassMarketplace0001
+    ports:
+      - "3001:3001"
+
+  ms-catalogo:
+    build: ./microservicio-catalogo
+    container_name: ms_catalogo
+    depends_on:
+      - db-catalogo
+    environment:
+      DB_HOST: db-catalogo
+      DB_USER: root
+      DB_PASS: ""
+      DB_NAME: buyza_catalogo
+      PORT: 3002
+      JWT_SECRET: PassMarketplace0001
+    ports:
+      - "3002:3002"
+
+  ms-ordenes:
+    build: ./microservicio-ordenes
+    container_name: ms_ordenes
+    depends_on:
+      - db-ordenes
+    environment:
+      DB_HOST: db-ordenes
+      DB_USER: root
+      DB_PASS: ""
+      DB_NAME: buyza_ordenes
+      URL_CATALOGO: http://ms-catalogo:3002/api/catalogo
+      URL_CREDITO: http://ms-credito:3005/api/credito
+      PORT: 3003
+      JWT_SECRET: PassMarketplace0001
+    ports:
+      - "3003:3003"
+
+  ms-pagos:
+    build: ./microservicio-pagos
+    container_name: ms_pagos
+    depends_on:
+      - db-pagos
+    environment:
+      DB_HOST: db-pagos
+      DB_USER: root
+      DB_PASS: ""
+      DB_NAME: buyza_pagos
+      PORT: 3004
+      JWT_SECRET: PassMarketplace0001
+    ports:
+      - "3004:3004"
+
+  ms-credito:
+    build: ./microservicio-credito
+    container_name: ms_credito
+    depends_on:
+      - db-credito
+    environment:
+      DB_HOST: db-credito
+      DB_USER: root
+      DB_PASS: ""
+      DB_NAME: buyza_credito
+      PORT: 3005
+      JWT_SECRET: PassMarketplace0001
+    ports:
+      - "3005:3005"
+
+  frontend:
+    image: php:8.1-apache
+    container_name: buyza_front
+    volumes:
+      - ./frontend/buyza-frontend:/var/www/html
+    ports:
+      - "8080:80"
+    depends_on:
+      - ms-usuarios
+      - ms-ordenes
+  haproxy:
+    image: haproxy:2.8
+    container_name: haproxy
+    ports:
+      - "5081:5081"
+      - "4001:4001"
+      - "4002:4002"
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    depends_on:
+      - ms-usuarios
+      - ms-catalogo
+
+networks:
+  buyza-net:
+    driver: bridge

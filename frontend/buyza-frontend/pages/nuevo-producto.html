@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Publicar Producto - Buyza</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">Buyza</a>
+  <div class="navbar-links">
+    <a href="catalogo.html" class="nav-link">Catálogo</a>
+    <a href="perfil.html" class="nav-link">Mi Perfil</a>
+    <a href="nuevo-producto.html" class="nav-link active">+ Publicar</a>
+    <a href="#" onclick="cerrarSesion()" class="btn-nav">Cerrar sesion</a>
+  </div>
+</nav>
+
+<div class="page-wrapper" style="max-width: 600px; margin: 100px auto; padding: 0 1rem;">
+  <div class="card">
+    <div id="alerta" class="alert"></div>
+    <h2 style="margin-bottom: 0.5rem;">Publicar <span>Nuevo Producto</span></h2>
+    <p style="color: var(--gray-500); font-size: 0.9rem; margin-bottom: 2rem;">
+      Completa los detalles para poner tu artículo a la venta.
+    </p>
+
+    <form id="formProducto">
+      <div class="form-group" style="margin-bottom: 1.2rem;">
+        <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem;">
+          Nombre del producto
+        </label>
+        <input type="text" id="nombre" class="form-control" required
+          placeholder="Ej. Smartphone X10"
+          style="width: 100%; padding: 0.8rem; border: 1px solid var(--gray-200); border-radius: 8px;">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.2rem;">
+        <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem;">
+          Descripción
+        </label>
+        <textarea id="descripcion" class="form-control" rows="3" required
+          placeholder="Describe las características principales..."
+          style="width: 100%; padding: 0.8rem; border: 1px solid var(--gray-200); border-radius: 8px;"></textarea>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.2rem;">
+        <div class="form-group">
+          <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem;">
+            Precio ($)
+          </label>
+          <input type="number" id="precio" class="form-control" step="0.01" required
+            placeholder="0.00"
+            style="width: 100%; padding: 0.8rem; border: 1px solid var(--gray-200); border-radius: 8px;">
+        </div>
+
+        <div class="form-group">
+          <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem;">
+            Stock inicial
+          </label>
+          <input type="number" id="stock" class="form-control" required min="1"
+            placeholder="1"
+            style="width: 100%; padding: 0.8rem; border: 1px solid var(--gray-200); border-radius: 8px;">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 2rem;">
+        <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem;">
+          URL de la imagen (opcional)
+        </label>
+        <input type="url" id="imagen_url" class="form-control"
+          placeholder="https://ejemplo.com/foto.jpg"
+          style="width: 100%; padding: 0.8rem; border: 1px solid var(--gray-200); border-radius: 8px;">
+      </div>
+
+      <div style="display: flex; gap: 1rem;">
+        <button type="submit" class="btn btn-primary" style="flex: 2; padding: 1rem;">
+          Publicar ahora
+        </button>
+        <a href="perfil.html" class="btn btn-outline" style="flex: 1; padding: 1rem; text-align: center;">
+          Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- CONFIG -->
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+
+<script>
+  const user = getUsuario();
+  if (!user || user.rol !== 'vendedor') {
+    window.location.href = 'perfil.html';
+  }
+
+  document.getElementById('formProducto').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Publicando...';
+
+    // 🔥 Obtener valores correctamente
+    const nombre = document.getElementById('nombre').value.trim();
+    const descripcion = document.getElementById('descripcion').value.trim();
+    const precio = parseFloat(document.getElementById('precio').value);
+    const cantidad = parseInt(document.getElementById('stock').value);
+
+    // ✅ VALIDACIÓN (evita errores de backend)
+    if (!nombre || !descripcion || isNaN(precio) || isNaN(cantidad) || cantidad <= 0) {
+      mostrarAlerta('alerta', 'Todos los campos son obligatorios y deben ser válidos', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Publicar ahora';
+      return;
+    }
+
+    const data = {
+      nombre,
+      descripcion,
+      precio,
+      cantidad // ✅ CORREGIDO (antes era stock)
+    };
+
+    try {
+      console.log('Enviando:', data); // DEBUG
+
+      const res = await catalogo.post('/', data);
+
+      if (res.mensaje || res.id) {
+        mostrarAlerta('alerta', 'Producto enviado para aprobación', 'success');
+        setTimeout(() => window.location.href = 'perfil.html', 1500);
+      } else {
+        throw res;
+      }
+
+    } catch (err) {
+      console.error(err);
+      mostrarAlerta('alerta', err.error || 'Error al publicar', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Publicar ahora';
+    }
+  });
+</script>
+
+</body>
+</html>

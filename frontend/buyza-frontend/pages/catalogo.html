@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo - Buyza</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">Buyza</a>
+  <div class="navbar-links">
+    <a href="../index.html" class="nav-link">Inicio</a>
+    <a href="perfil.html" class="nav-link">Mi Perfil</a>
+    <div id="btn-vendedor-container"></div>
+    <a href="#" onclick="cerrarSesion()" class="btn-nav">Cerrar sesión</a>
+  </div>
+</nav>
+
+<div style="padding: 100px 2rem; max-width: 1200px; margin: 0 auto;">
+  <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem">
+    <h1>Explorar <span>Productos</span></h1>
+  </div>
+  <div id="alerta" class="alert"></div>
+  <div id="grid-productos" class="features-grid">
+    <p id="loading-text" style="text-align:center; grid-column: 1/-1; color:var(--gray-400)">Cargando productos...</p>
+  </div>
+</div>
+
+<script src="../js/config.js?v=1.1"></script>
+<script src="../js/api.js?v=1.1"></script>
+<script>
+  const user = getUsuario();
+  
+  if (!user || !localStorage.getItem('token')) {
+    window.location.href = 'login.html';
+  }
+
+  if(user && user.rol === 'vendedor') {
+    document.getElementById('btn-vendedor-container').innerHTML = 
+      `<a href="nuevo-producto.html" class="btn btn-primary" style="padding:0.5rem 1rem; font-size:0.8rem">+ Publicar Producto</a>`;
+  }
+
+  async function cargarProductos() {
+    const grid = document.getElementById('grid-productos');
+    try {
+      const productos = await catalogo.get('');
+      
+      if (!productos || productos.error) {
+        mostrarAlerta('alerta', productos?.error || 'Error al cargar productos', 'error');
+        grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color:var(--gray-400)">No se pudo cargar los productos.</p>';
+        return;
+      }
+      
+      const lista = Array.isArray(productos) ? productos : (productos.productos || []);
+
+      if (lista.length === 0) {
+        grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color:var(--gray-400)">No hay productos disponibles.</p>';
+        return;
+      }
+
+      grid.innerHTML = lista.map(p => `
+        <div class="feature-card">
+          <div class="feature-icon" style="background:var(--primary-light); color:var(--primary); width:50px; height:50px; border-radius:12px; display:flex; align-items:center; justify-content:center; margin-bottom:1rem">📦</div>
+          <h3 style="margin-bottom:0.5rem">${p.nombre}</h3>
+          <p style="font-size:0.85rem; color:var(--gray-600); margin-bottom:1.5rem">${p.descripcion}</p>
+          <div style="margin-top:auto; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--gray-100); padding-top:1rem">
+            <span style="font-weight:800; color:var(--primary); font-size:1.2rem">${formatPeso(p.precio)}</span>
+            <button onclick="comprar(${p.id})" class="btn btn-outline" style="padding:0.4rem 1rem; font-size:0.8rem">Comprar</button>
+          </div>
+          <div style="font-size:0.7rem; color:var(--gray-400); margin-top:0.5rem">Vendido por: ${p.vendedor_nombre || p.vendedor || 'Usuario'}</div>
+        </div>
+      `).join('');
+    } catch (err) {
+      mostrarAlerta('alerta', 'Error de conexión con el servidor', 'error');
+      grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color:var(--gray-400)">Error de red o configuración.</p>';
+    }
+  }
+
+  // Función que se dispara al hacer clic en el botón "Comprar" de un producto
+  async function comprar(id_producto) {
+    try {
+      // 1. Llamada al Microservicio de Órdenes (Puerto 3003)
+      // Se envía el id_producto; el microservicio valida stock y precio
+      const res = await ordenes.post('/crear', { id_producto });
+      if(res && res.id_orden) {
+        // Si la orden se creó con éxito (estado 'pendiente')
+        mostrarAlerta('alerta', 'Orden creada correctamente', 'success');
+
+        // 2. Redirección automática al flujo de Pagos
+        // Pasamos el ID de la orden recién creada por la URL
+        setTimeout(() => {
+          window.location.href = `pago.html?id=${res.id_orden}`;
+        }, 1200);
+      } else {
+        // Manejo de errores (ej: producto sin stock)
+        mostrarAlerta('alerta', res?.error || 'Error al procesar compra', 'error');
+      }
+    } catch (err) {
+      mostrarAlerta('alerta', 'Error al procesar la orden', 'error');
+    }
+  }
+
+  window.onload = cargarProductos;
+</script>
+</body>
+</html>

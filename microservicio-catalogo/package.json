@@ -1,0 +1,30 @@
+{
+  "name": "buyza-catalogo",
+  "version": "1.0.0",
+  "description": "Microservicio de gestión de catálogo y vendedores para la plataforma Buyza",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": [
+    "microservicios",
+    "catalogo",
+    "buyza"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^1.13.6",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^4.22.1",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.1",
+    "mysql2": "^3.20.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

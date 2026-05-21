@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buyza - Compra y vende sin limites</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .auth-content { display: none; }
+    .auth-content.show { display: block; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">Buyza</a>
+  <div class="navbar-links" id="navbarLinks">
+  </div>
+</nav>
+
+<div id="guestContent">
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">Marketplace moderno y seguro</div>
+      <h1>Compra y vende<br><span>sin limites</span></h1>
+      <p>Conectamos compradores y vendedores en una plataforma segura, rapida y facil de usar. Tu proximo negocio empieza aqui.</p>
+      <div class="hero-buttons">
+        <a href="pages/registro.html" class="btn btn-primary">Crear cuenta gratis</a>
+        <a href="pages/login.html" class="btn btn-outline">Iniciar sesion</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="section-header">
+      <h2>Todo lo que necesitas</h2>
+      <p>Una plataforma pensada para vendedores y compradores por igual</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#6c63ff" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3>Registro rapido</h3>
+        <p>Crea tu cuenta como comprador o vendedor en menos de un minuto.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#6c63ff" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3>Vendedores verificados</h3>
+        <p>Todos los vendedores pasan por un proceso de validacion para mayor confianza.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#6c63ff" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        </div>
+        <h3>Pagos seguros</h3>
+        <p>Transacciones protegidas para que compres y vendas con total tranquilidad.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#6c63ff" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <h3>Sin comisiones ocultas</h3>
+        <p>Transparencia total en cada operacion. Lo que ves es lo que pagas.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="authContent" class="auth-content" style="padding: 100px 2rem; max-width: 1200px; margin: 0 auto;">
+  <div style="text-align:center; padding:3rem 0">
+    <h1 style="font-size:2.5rem; margin-bottom:1rem">¡Bienvenido!</h1>
+    <p style="font-size:1.1rem; color:var(--gray-600); margin-bottom:2rem" id="welcomeMsg">Loading...</p>
+    <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap">
+      <a href="pages/catalogo.html" class="btn btn-primary" style="padding:0.7rem 2rem">Ver Catálogo</a>
+      <a href="pages/perfil.html" class="btn btn-outline" style="padding:0.7rem 2rem">Mi Perfil</a>
+      <a href="pages/credito.html" class="btn btn-outline" style="padding:0.7rem 2rem" id="btnCredito">Mi Crédito</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>2026 <span>Buyza</span>. Todos los derechos reservados.</p>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script>
+  function actualizarNavbar() {
+    const user = getUsuario();
+    const token = localStorage.getItem('token');
+    const navbar = document.getElementById('navbarLinks');
+    const guestContent = document.getElementById('guestContent');
+    const authContent = document.getElementById('authContent');
+
+    if (user && token) {
+      // ✅ USUARIO AUTENTICADO
+      navbar.innerHTML = `
+        <a href="pages/catalogo.html" class="nav-link">Catálogo</a>
+        <a href="pages/perfil.html" class="nav-link">Mi perfil</a>
+        <span class="nav-link" style="cursor:default; color:var(--gray-600)">Hola, ${user.nombre}</span>
+        <a href="#" onclick="cerrarSesion()" class="btn-nav">Cerrar sesion</a>
+      `;
+      guestContent.style.display = 'none';
+      authContent.classList.add('show');
+      
+      const rol = user.rol === 'comprador' ? 'Comprador' : user.rol === 'vendedor' ? 'Vendedor' : 'Administrador';
+      document.getElementById('welcomeMsg').textContent = `Te has autenticado como ${rol}`;
+      
+      if (user.rol !== 'comprador') {
+        document.getElementById('btnCredito').style.display = 'none';
+      }
+    } else {
+      navbar.innerHTML = `
+        <a href="index.html" class="nav-link active">Inicio</a>
+        <a href="pages/registro.html" class="nav-link">Registrarse</a>
+        <a href="pages/login.html" class="btn-nav">Iniciar sesion</a>
+      `;
+      guestContent.style.display = 'block';
+      authContent.classList.remove('show');
+    }
+  }
+
+  actualizarNavbar();
+</script>
+</body>
+</html>

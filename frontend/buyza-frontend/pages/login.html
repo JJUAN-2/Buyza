@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Buyza</title>
+
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">Buyza</a>
+  <div class="navbar-links">
+    <a href="login.html" class="btn-nav">Login</a>
+  </div>
+</nav>
+
+<div style="padding: 120px 1rem 2rem; display:flex; justify-content:center;">
+  
+  <div class="card" style="max-width: 400px; width:100%; padding:2rem;">
+    
+    <h2 style="text-align:center; font-weight:800; margin-bottom:1.5rem;">
+      Iniciar sesión
+    </h2>
+
+    <div id="alerta" class="alert"></div>
+
+    <form id="formLogin">
+      
+      <div class="form-group">
+        <label class="form-label">Correo electrónico</label>
+        <input type="email" id="email" class="form-control" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Contraseña</label>
+        <input type="password" id="password" class="form-control" required>
+      </div>
+
+      <button type="submit" id="btnLogin" class="btn btn-primary btn-full" style="margin-top:1rem;">
+        Iniciar sesión
+      </button>
+
+    </form>
+
+  </div>
+
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+
+<script>
+  function mostrarAlerta(id, mensaje, tipo) {
+    const div = document.getElementById(id);
+    div.innerHTML = `<div class="alert alert-${tipo}">${mensaje}</div>`;
+  }
+
+  function limpiarSesion() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('usuario');
+  }
+
+  function getUsuario() {
+    return JSON.parse(localStorage.getItem('usuario'));
+  }
+
+  async function checkSession() {
+    const token = localStorage.getItem('token');
+    const user = getUsuario();
+
+    if (!token || !user) return;
+
+    try {
+      const res = await usuarios.get('/perfil');
+      const perfil = res.usuario || res;
+
+      if (perfil && perfil.nombre) {
+        window.location.href = perfil.rol === 'admin' ? 'admin.html' : 'perfil.html';
+      } else {
+        limpiarSesion();
+      }
+    } catch (e) {
+      limpiarSesion();
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+
+    checkSession();
+
+    document.getElementById('formLogin').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const btn = document.getElementById('btnLogin');
+      const alertaId = 'alerta';
+
+      btn.innerHTML = 'Ingresando...';
+      btn.disabled = true;
+
+      limpiarSesion();
+
+      const credentials = {
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value
+      };
+
+      try {
+        const res = await usuarios.post('/login', credentials);
+
+        if (res && res.token) {
+          localStorage.setItem('token', res.token);
+          localStorage.setItem('usuario', JSON.stringify(res.usuario));
+
+          mostrarAlerta(alertaId, 'Inicio de sesión exitoso', 'success');
+
+          setTimeout(() => {
+            window.location.href = res.usuario.rol === 'admin' ? 'admin.html' : 'perfil.html';
+          }, 1000);
+
+        } else {
+          throw new Error(res.error || 'Credenciales inválidas');
+        }
+
+      } catch (err) {
+        mostrarAlerta(alertaId, err.error || err.message || 'Error de conexión', 'error');
+        btn.innerHTML = 'Iniciar sesión';
+        btn.disabled = false;
+        limpiarSesion();
+      }
+
+    });
+
+  });
+</script>
+
+</body>
+</html>

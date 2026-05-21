@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buyza - Mi Crédito</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <style>
+    .credito-hero { padding: 100px 2rem 2rem; background: linear-gradient(135deg, #f7f8fc 0%, #ede9ff 100%); min-height: 100vh; }
+    .credito-container { max-width: 960px; margin: 0 auto; }
+    .credito-header { margin-bottom: 2rem; animation: fadeUp 0.5s ease forwards; }
+    .credito-header h1 { font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 0.4rem; color: var(--dark); }
+    .credito-header h1 span { background: linear-gradient(135deg, var(--primary), var(--secondary)); background-clip: text; -webkit-text-fill-color: transparent; }
+    .credito-header p { color: var(--gray-600); font-size: 1rem; }
+    .cupo-card { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: var(--radius); padding: 2.5rem; color: white; margin-bottom: 2rem; box-shadow: var(--shadow-lg); position: relative; overflow: hidden; }
+    .cupo-card::before { content: ''; position: absolute; width: 350px; height: 350px; background: rgba(255,255,255,0.07); border-radius: 50%; top: -120px; right: -100px; }
+    .cupo-card::after { content: ''; position: absolute; width: 250px; height: 250px; background: rgba(255,255,255,0.05); border-radius: 50%; bottom: -80px; left: -50px; }
+    .cupo-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; position: relative; z-index: 1; }
+    .cupo-label { font-size: 0.9rem; opacity: 0.85; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
+    .cupo-amount { font-size: 3.5rem; font-weight: 900; letter-spacing: -2px; line-height: 1; }
+    .cupo-badge { background: rgba(255,255,255,0.25); padding: 0.5rem 1.25rem; border-radius: 50px; font-size: 0.85rem; font-weight: 700; backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.3); }
+    .cupo-progress-wrap { position: relative; z-index: 1; margin-top: 1rem; }
+    .cupo-progress-labels { display: flex; justify-content: space-between; font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.75rem; }
+    .cupo-progress-bar { height: 12px; background: rgba(255,255,255,0.15); border-radius: 50px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+    .cupo-progress-fill { height: 100%; background: white; border-radius: 50px; transition: width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); width: 0%; }
+    .cupo-stats { display: flex; gap: 3rem; margin-top: 2rem; position: relative; z-index: 1; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem; }
+    .cupo-stat-item { font-size: 0.9rem; opacity: 0.9; line-height: 1.4; }
+    .cupo-stat-item strong { display: block; font-size: 1.4rem; font-weight: 800; opacity: 1; margin-bottom: 2px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .stat-card { background: white; padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--gray-200); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; }
+    .stat-label { font-size: 0.8rem; color: var(--gray-500); text-transform: uppercase; margin-bottom: 0.5rem; }
+    .stat-value { font-size: 1.5rem; font-weight: 700; }
+    .stat-value.purple { color: var(--primary); }
+    .stat-value.red { color: var(--danger); }
+    .grid-2 { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 2rem; margin-bottom: 3rem; }
+    @media (max-width: 850px) { .grid-2 { grid-template-columns: 1fr; } }
+    .section-card { background: white; border-radius: var(--radius); padding: 2rem; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200); opacity: 0; animation: fadeUp 0.6s ease forwards; }
+    .section-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; color: var(--dark); }
+    .section-title svg { width: 22px; height: 22px; color: var(--primary); }
+    .cuota-item { border: 1px solid var(--gray-100); background: var(--gray-50); border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1rem; transition: all 0.3s ease; }
+    .cuota-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+    .cuota-monto { font-size: 1.2rem; font-weight: 800; color: var(--dark); }
+    .cuota-badge-status { font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; background: #fef3c7; color: #92400e; font-weight: 600; }
+    .historial-item { display: flex; align-items: center; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--gray-100); }
+    .historial-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+    .historial-icon.compra { background: #fee2e2; color: #b91c1c; }
+    .historial-icon.pago { background: #dcfce7; color: #15803d; }
+    .historial-icon.aumento { background: #e0e7ff; color: #4338ca; }
+    .historial-desc { flex: 1; }
+    .historial-desc strong { display: block; font-size: 0.95rem; font-weight: 700; color: var(--dark); }
+    .historial-monto { font-weight: 800; font-size: 1rem; text-align: right; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+    .modal-overlay.show { display: flex; }
+    .modal { background: white; border-radius: var(--radius); padding: 2.5rem; width: 100%; max-width: 480px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+    .resumen-cuotas { background: #f8fafc; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 1.25rem; margin: 1.5rem 0; }
+    .resumen-row { display: flex; justify-content: space-between; font-size: 0.95rem; margin-bottom: 0.5rem; }
+    .resumen-row.total { border-top: 1px dashed var(--gray-300); padding-top: 0.5rem; font-weight: 700; }
+    .btn-liquidar { margin-top: 10px; padding: 6px 12px; font-size: 0.75rem; background: var(--danger); color: white; border: none; border-radius: 6px; cursor: pointer; display: none; font-weight: 700; transition: background 0.2s; }
+    .btn-liquidar:hover { background: #991b1b; }
+    .empty-state { padding: 2rem; text-align: center; color: var(--gray-400); font-style: italic; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-container">
+    <a class="navbar-brand" href="../index.html">Buyza</a>
+    <div class="navbar-links">
+      <a href="../index.html" class="nav-link">Inicio</a>
+      <a href="perfil.html" class="nav-link">Mi perfil</a>
+      <a href="#" class="nav-link active">Mi crédito</a>
+      <button class="btn-nav" id="btnCerrarSesion">Cerrar sesión</button>
+    </div>
+  </div>
+</nav>
+
+<div class="credito-hero">
+  <div class="credito-container">
+    <div class="credito-header">
+      <h1>Mi <span>Crédito</span></h1>
+      <p>Administra tu disponibilidad y mantente al día con tus pagos.</p>
+    </div>
+
+    <div id="alertGlobal" class="alert"></div>
+
+    <div class="cupo-card">
+      <div class="cupo-top">
+        <div>
+          <div class="cupo-label">Cupo disponible</div>
+          <div class="cupo-amount" id="cupoDisponible">$0</div>
+        </div>
+        <div class="cupo-badge" id="estadoCupo">Consultando...</div>
+      </div>
+      <div class="cupo-progress-wrap">
+        <div class="cupo-progress-labels">
+          <span>Usado: <strong id="cupoUsadoLabel">$0</strong></span>
+          <span>Cupo Total: <strong id="cupoTotalLabel">$0</strong></span>
+        </div>
+        <div class="cupo-progress-bar">
+          <div class="cupo-progress-fill" id="cupoProgressFill"></div>
+        </div>
+      </div>
+      <div class="cupo-stats">
+        <div class="cupo-stat-item"><strong id="comprasCompletadas">0</strong>Compras pagas</div>
+        <div class="cupo-stat-item"><strong id="comprasParaAumento">0</strong>Para subir cupo</div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total del Crédito</div>
+        <div class="stat-value purple" id="statCupoTotal">$0</div>
+      </div>
+      <div class="stat-card">
+        <div>
+          <div class="stat-label">Deuda Actual</div>
+          <div class="stat-value red" id="statCupoUsado">$0</div>
+        </div>
+        <button class="btn-liquidar" id="btnLiquidarTodo" onclick="liquidarDeudaTotal()">Liquidar todo</button>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Cuotas Pendientes</div>
+        <div class="stat-value" id="statCuotasPendientes">0</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="section-card" style="animation-delay: 0.1s">
+        <div class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Cuotas a Pagar
+        </div>
+        <div id="listaCuotas"></div>
+        <button class="btn btn-primary btn-full" style="margin-top: 1.5rem;" onclick="abrirModalCredito()">Simular compra</button>
+      </div>
+
+      <div class="section-card" style="animation-delay: 0.2s">
+        <div class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Últimos Movimientos
+        </div>
+        <div id="listaHistorial"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalCredito">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Simular Compra</h3>
+      <button class="modal-close" onclick="cerrarModalCredito()">✕</button>
+    </div>
+    <div id="alertModal" class="alert"></div>
+    <div class="form-group">
+      <label class="form-label">Monto de la compra</label>
+      <input type="number" class="form-control" id="montoCredito" oninput="calcularCuotas()" placeholder="Ej: 50000">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Diferir a</label>
+      <select class="form-control" id="numCuotas" onchange="calcularCuotas()">
+        <option value="1">1 Mes (Sin interés)</option>
+        <option value="3">3 Meses</option>
+        <option value="6">6 Meses</option>
+      </select>
+    </div>
+    <div class="resumen-cuotas" id="resumenCuotas" style="display:none">
+      <div class="resumen-row"><span>Valor de la cuota</span><span id="resumenValorCuota"></span></div>
+      <div class="resumen-row total"><span>Cupo tras compra</span><span id="resumenCupoRestante"></span></div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="confirmarCredito()">Confirmar Compra</button>
+  </div>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script>
+  if (!localStorage.getItem('token')) window.location.href = 'login.html';
+  const user = getUsuario();
+  let cupoActual = 0;
+
+  async function cargarCredito() {
+    try {
+      const data = await creditos.get('mio');
+      cupoActual = parseFloat(data.cupo_disponible);
+      const total = parseFloat(data.cupo_total);
+      const usado = Math.max(0, total - cupoActual);
+      const pct = total > 0 ? (usado / total * 100) : 0;
+
+      document.getElementById('cupoDisponible').textContent = formatPeso(cupoActual);
+      document.getElementById('cupoUsadoLabel').textContent = formatPeso(usado);
+      document.getElementById('cupoTotalLabel').textContent = formatPeso(total);
+      document.getElementById('estadoCupo').textContent = pct > 90 ? 'Casi agotado' : 'Cuenta activa';
+      document.getElementById('comprasCompletadas').textContent = data.compras_completadas || 0;
+      document.getElementById('comprasParaAumento').textContent = data.compras_para_aumento || 0;
+      document.getElementById('statCupoTotal').textContent = formatPeso(total);
+      document.getElementById('statCupoUsado').textContent = formatPeso(usado);
+      
+      document.getElementById('btnLiquidarTodo').style.display = usado > 1 ? 'block' : 'none';
+
+      setTimeout(() => { 
+        document.getElementById('cupoProgressFill').style.width = pct + '%'; 
+      }, 400);
+    } catch (err) { console.error(err); }
+  }
+
+  async function cargarCuotas() {
+    try {
+      const cuotas = await creditos.get('cuotas');
+      document.getElementById('statCuotasPendientes').textContent = cuotas.length;
+      
+      if (cuotas.length > 0) {
+        document.getElementById('listaCuotas').innerHTML = cuotas.map(c => `
+          <div class="cuota-item">
+            <div class="cuota-top-row">
+              <span class="cuota-monto">${formatPeso(c.monto_total)}</span>
+              <span class="cuota-badge-status">${c.estado.toUpperCase()}</span>
+            </div>
+            <div class="cuota-info">
+              <div>Avance: <strong>${c.cuotas_pagadas} de ${c.cuotas_totales}</strong> cuotas</div>
+              <div>Próximo pago: <strong>${formatPeso(c.monto_por_cuota)}</strong></div>
+            </div>
+            <button class="btn btn-success btn-full" style="margin-top: 1rem;" onclick="pagarCuota(${c.id})">Pagar mensualidad</button>
+          </div>`).join('');
+      } else {
+        document.getElementById('listaCuotas').innerHTML = '<div class="empty-state">No tienes deudas pendientes.</div>';
+      }
+    } catch (err) { console.error(err); }
+  }
+
+  async function cargarHistorial() {
+    try {
+      const movs = await creditos.get('historial');
+      const iconos = { compra: '🛒', pago: '💰', aumento_cupo: '📈' };
+      document.getElementById('listaHistorial').innerHTML = movs.length ? movs.map(m => `
+        <div class="historial-item">
+          <div class="historial-icon ${m.tipo === 'compra' ? 'compra' : (m.tipo === 'pago' ? 'pago' : 'aumento')}">${iconos[m.tipo] || '📊'}</div>
+          <div class="historial-desc">
+            <strong>${m.descripcion}</strong>
+            <span>${new Date(m.fecha).toLocaleDateString()}</span>
+          </div>
+          <div class="historial-monto ${m.tipo === 'compra' ? 'red' : 'green'}">
+            ${m.tipo === 'compra' ? '-' : '+'}${formatPeso(m.monto)}
+          </div>
+        </div>`).join('') : '<div class="empty-state">Sin movimientos registrados.</div>';
+    } catch (err) { console.error(err); }
+  }
+
+  async function pagarCuota(id) {
+    try {
+      await creditos.post(`pagar/${id}`, {});
+      mostrarAlerta('alertGlobal', '¡Mensualidad pagada!', 'success');
+      cargarTodo();
+    } catch (err) { mostrarAlerta('alertGlobal', 'Error al procesar pago', 'danger'); }
+  }
+
+  async function liquidarDeudaTotal() {
+    if (!confirm('¿Estás seguro de que deseas liquidar el total de tu deuda actual?')) return;
+    try {
+      await creditos.post('liquidar', {});
+      mostrarAlerta('alertGlobal', '¡Deuda liquidada con éxito!', 'success');
+      cargarTodo();
+    } catch (err) { mostrarAlerta('alertGlobal', 'Error al liquidar deuda', 'danger'); }
+  }
+
+  function abrirModalCredito() { document.getElementById('modalCredito').classList.add('show'); }
+  function cerrarModalCredito() { 
+    document.getElementById('modalCredito').classList.remove('show');
+    document.getElementById('montoCredito').value = '';
+    document.getElementById('resumenCuotas').style.display = 'none';
+  }
+
+  function calcularCuotas() {
+    const monto = parseFloat(document.getElementById('montoCredito').value);
+    const cuotas = parseInt(document.getElementById('numCuotas').value);
+    const res = document.getElementById('resumenCuotas');
+    if (!monto || monto <= 0) { res.style.display = 'none'; return; }
+    res.style.display = 'block';
+    document.getElementById('resumenValorCuota').textContent = formatPeso(monto / cuotas);
+    document.getElementById('resumenCupoRestante').textContent = formatPeso(cupoActual - monto);
+  }
+
+  async function confirmarCredito() {
+    const monto = parseFloat(document.getElementById('montoCredito').value);
+    const cuotas = parseInt(document.getElementById('numCuotas').value);
+    if (!monto || monto > cupoActual) return mostrarAlerta('alertModal', 'Monto inválido o cupo insuficiente', 'danger');
+    try {
+      await creditos.post('usar', { usuario_id: user.id, monto, cuotas, compra_id: Math.floor(Math.random() * 100000) });
+      cerrarModalCredito();
+      mostrarAlerta('alertGlobal', 'Compra aprobada y registrada', 'success');
+      cargarTodo();
+    } catch (err) { mostrarAlerta('alertModal', err.message || 'Error en la solicitud', 'danger'); }
+  }
+
+  function cargarTodo() { 
+    cargarCredito(); 
+    cargarCuotas(); 
+    cargarHistorial(); 
+  }
+
+  document.getElementById('btnCerrarSesion').addEventListener('click', cerrarSesion);
+  window.onload = cargarTodo;
+</script>
+</body>
+</html>

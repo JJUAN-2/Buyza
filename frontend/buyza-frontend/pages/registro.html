@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crear cuenta - Buyza</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">Buyza</a>
+  <div class="navbar-links">
+    <a href="../index.html" class="nav-link">Inicio</a>
+    <a href="login.html" class="btn-nav">Iniciar sesion</a>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="card">
+    <div class="card-header">
+      <h2>Crea tu cuenta</h2>
+      <p>Unete a Buyza y empieza hoy mismo</p>
+    </div>
+
+    <div id="alerta" class="alert"></div>
+
+    <form id="formRegistro">
+      <div class="form-group">
+        <label class="form-label">Nombre completo</label>
+        <input type="text" id="nombre" class="form-control" placeholder="Tu nombre" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Correo electronico</label>
+        <input type="email" id="email" class="form-control" placeholder="tu@correo.com" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contrasena</label>
+        <input type="password" id="password" class="form-control" placeholder="Minimo 6 caracteres" required minlength="6">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Tipo de cuenta</label>
+        <div class="rol-selector">
+          <input type="radio" name="rol" id="rolComprador" value="comprador" class="rol-option" checked>
+          <label for="rolComprador" class="rol-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            Comprador
+          </label>
+          <input type="radio" name="rol" id="rolVendedor" value="vendedor" class="rol-option">
+          <label for="rolVendedor" class="rol-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Vendedor
+          </label>
+        </div>
+      </div>
+
+      <div id="notaVendedor" style="display:none" class="alert alert-warning show" style="margin-bottom:1rem">
+        Tu cuenta como vendedor debera ser aprobada por un administrador antes de poder publicar productos.
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full" id="btnRegistro">
+        Crear cuenta
+      </button>
+    </form>
+
+    <div class="divider">o</div>
+
+    <p style="text-align:center; font-size:0.9rem; color:var(--gray-600)">
+      Ya tienes cuenta?
+      <a href="login.html" style="color:var(--primary); font-weight:600; text-decoration:none">Inicia sesion</a>
+    </p>
+  </div>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script>
+  document.querySelectorAll('input[name="rol"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      document.getElementById('notaVendedor').style.display =
+        radio.value === 'vendedor' && radio.checked ? 'block' : 'none';
+    });
+  });
+
+  document.getElementById('formRegistro').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btnRegistro');
+    btn.innerHTML = '<span class="spinner"></span> Creando cuenta...';
+    btn.disabled = true;
+
+    const data = {
+      nombre: document.getElementById('nombre').value,
+      email: document.getElementById('email').value,
+      password: document.getElementById('password').value,
+      rol: document.querySelector('input[name="rol"]:checked').value
+    };
+
+    try {
+      const res = await usuarios.post('/registro', data);
+      if (res.id) {
+        const msg = data.rol === 'vendedor'
+          ? 'Cuenta creada. Espera la aprobacion de un administrador para poder vender.'
+          : 'Cuenta creada exitosamente. Ahora puedes iniciar sesion.';
+        mostrarAlerta('alerta', msg, 'success');
+        document.getElementById('formRegistro').reset();
+        document.getElementById('notaVendedor').style.display = 'none';
+        setTimeout(() => { window.location.href = 'login.html'; }, 2500);
+      } else {
+        mostrarAlerta('alerta', res.error || 'Error al crear la cuenta', 'error');
+      }
+    } catch {
+      mostrarAlerta('alerta', 'No se pudo conectar con el servidor', 'error');
+    } finally {
+      btn.innerHTML = 'Crear cuenta';
+      btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

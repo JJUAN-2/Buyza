@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editar Producto - Buyza</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">Buyza</a>
+  <div class="navbar-links">
+    <a href="catalogo.html" class="nav-link">Catálogo</a>
+    <a href="perfil.html" class="nav-link">Mi Perfil</a>
+    <a href="nuevo-producto.html" class="nav-link">+ Publicar</a>
+    <a href="#" onclick="cerrarSesion()" class="btn-nav">Cerrar sesion</a>
+  </div>
+</nav>
+
+<div class="page-wrapper" style="max-width: 600px; margin: 100px auto; padding: 0 1rem;">
+  <div class="card">
+    <div id="alerta" class="alert"></div>
+    <h2 style="margin-bottom: 0.5rem;">Editar <span>Producto</span></h2>
+    <p style="color: var(--gray-500); font-size: 0.9rem; margin-bottom: 2rem;">Modifica la información de tu publicación.</p>
+
+    <form id="formEditar">
+      <div class="form-group" style="margin-bottom: 1.2rem;">
+        <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem;">Nombre</label>
+        <input type="text" id="nombre" class="form-control" required style="width: 100%; padding: 0.8rem; border: 1px solid var(--gray-200); border-radius: 8px;">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.2rem;">
+        <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem;">Descripción</label>
+        <textarea id="descripcion" class="form-control" rows="3" required style="width: 100%; padding: 0.8rem; border: 1px solid var(--gray-200); border-radius: 8px; font-family: inherit;"></textarea>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.2rem;">
+        <div class="form-group">
+          <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem;">Precio ($)</label>
+          <input type="number" id="precio" class="form-control" step="0.01" required style="width: 100%; padding: 0.8rem; border: 1px solid var(--gray-200); border-radius: 8px;">
+        </div>
+        <div class="form-group">
+          <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem;">Stock</label>
+          <input type="number" id="stock" class="form-control" required style="width: 100%; padding: 0.8rem; border: 1px solid var(--gray-200); border-radius: 8px;">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.2rem;">
+        <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem;">Estado</label>
+        <select id="estado" class="form-control" style="width: 100%; padding: 0.8rem; border: 1px solid var(--gray-200); border-radius: 8px;">
+          <option value="activo">Activo (Visible)</option>
+          <option value="inactivo">Inactivo (Oculto)</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 2rem;">
+        <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem;">URL Imagen</label>
+        <input type="url" id="imagen_url" class="form-control" style="width: 100%; padding: 0.8rem; border: 1px solid var(--gray-200); border-radius: 8px;">
+      </div>
+
+      <div style="display: flex; gap: 1rem;">
+        <button type="submit" class="btn btn-primary" style="flex: 2; padding: 1rem;">Guardar Cambios</button>
+        <a href="perfil.html" class="btn btn-outline" style="flex: 1; padding: 1rem; text-align: center;">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ✅ CARGAR CONFIG PRIMERO -->
+<script src="../js/config.js"></script>
+<!-- ✅ DESPUÉS CARGAR API.JS -->
+<script src="../js/api.js"></script>
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const productId = urlParams.get('id');
+  const user = getUsuario();
+
+  if (!user || user.rol !== 'vendedor' || !productId) window.location.href = 'perfil.html';
+
+  async function cargarProducto() {
+    const productos = await catalogo.get('/mis-productos');
+    const p = productos.find(item => item.id == productId);
+    
+    if (p) {
+      document.getElementById('nombre').value = p.nombre;
+      document.getElementById('descripcion').value = p.descripcion;
+      document.getElementById('precio').value = p.precio;
+      document.getElementById('stock').value = p.stock;
+      document.getElementById('estado').value = p.estado;
+      document.getElementById('imagen_url').value = p.imagen_url;
+    } else {
+      mostrarAlerta('alerta', 'No se encontró el producto o no tienes permiso.', 'error');
+    }
+  }
+
+  document.getElementById('formEditar').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+
+    const data = {
+      nombre: document.getElementById('nombre').value,
+      descripcion: document.getElementById('descripcion').value,
+      precio: parseFloat(document.getElementById('precio').value),
+      stock: parseInt(document.getElementById('stock').value),
+      estado: document.getElementById('estado').value,
+      imagen_url: document.getElementById('imagen_url').value
+    };
+
+    const res = await catalogo.put(`/${productId}`, data);
+
+    if (res.mensaje) {
+      mostrarAlerta('alerta', 'Actualizado correctamente', 'success');
+      setTimeout(() => window.location.href = 'perfil.html', 1500);
+    } else {
+      mostrarAlerta('alerta', res.error || 'Error al actualizar', 'error');
+      btn.disabled = false;
+    }
+  });
+
+  cargarProducto();
+</script>
+</body>
+</html>

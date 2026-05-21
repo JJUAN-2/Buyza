@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finalizar Pago - Buyza</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../index.html">Buyza</a>
+  <div class="navbar-links">
+    <a href="catalogo.html" class="nav-link">Catálogo</a>
+    <a href="perfil.html" class="nav-link">Mi Perfil</a>
+    <a href="#" onclick="cerrarSesion()" class="btn-nav">Cerrar sesion</a>
+  </div>
+</nav>
+
+<div class="card" style="max-width: 500px; margin: 120px auto; padding: 2rem; text-align: center;">
+  <div id="alerta" class="alert"></div>
+  <div id="contenido-pago">
+    <div id="orderIdDisplay" style="background:var(--primary-light); color:var(--primary); padding:0.5rem 1rem; border-radius:50px; font-weight:700; display:inline-block; margin-bottom:1rem">Cargando...</div>
+    <h1>Confirmar tu pago</h1>
+    <div id="totalDisplay" style="font-size:2.5rem; font-weight:800; color:var(--dark); margin:1.5rem 0">$0.00</div>
+    <p id="infoDeuda" style="color:var(--gray-500); margin-bottom:2rem"></p>
+
+    <div style="margin-bottom: 1.5rem; text-align: left;">
+      <label style="font-size: 0.8rem; font-weight: 700; color: var(--gray-600);">Método de Pago</label>
+      <select id="metodo_pago" class="form-control" style="width: 100%; margin-top: 0.5rem; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--gray-200);">
+        <option value="tarjeta">Tarjeta de Crédito/Débito</option>
+        <option value="transferencia">Transferencia Bancaria</option>
+        <option value="efectivo">Efectivo (Punto de pago)</option>
+      </select>
+    </div>
+
+    <button onclick="procesarPago()" id="btnPago" class="btn btn-primary" style="width:100%; padding:1rem">Pagar ahora</button>
+    <a href="catalogo.html" style="display:block; margin-top:1rem; font-size:0.85rem; color:var(--gray-400)">Volver al catálogo</a>
+  </div>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script>
+  // Obtiene el id de la orden de la URL (proviene del microservicio de Órdenes)
+  const urlParams = new URLSearchParams(window.location.search);
+  const orderId = urlParams.get('id');
+  const user = getUsuario();
+  let montoPendiente = 0;
+
+  // Seguridad: Si no hay usuario o id de orden, redirige al catálogo
+  if (!user || !orderId) window.location.href = 'catalogo.html';
+
+  // Consulta al microservicio de Pagos (Puerto 3004) el estado financiero de la orden
+  async function cargarEstadoCuenta() {
+    const data = await pagos.get(`/estado-cuenta/${orderId}`);
+    if (data && !data.error) {
+      // Guarda el saldo restante para procesar el pago exacto
+      montoPendiente = data.saldo_restante;
+      document.getElementById('orderIdDisplay').textContent = `Orden #${orderId}`;
+      document.getElementById('totalDisplay').textContent = formatPeso(montoPendiente);
+
+      // Valida si la orden ya fue liquidada en el microservicio
+      document.getElementById('infoDeuda').textContent = data.estado_pago === 'liquidada' ? 'Esta orden ya está pagada' : `Total de la orden: ${formatPeso(data.monto_total_orden)}`;
+      
+      // Si ya está pagada, oculta los controles de pago
+      if(data.estado_pago === 'liquidada') {
+        document.getElementById('btnPago').style.display = 'none';
+        document.getElementById('metodo_pago').parentElement.style.display = 'none';
+      }
+    } else {
+      mostrarAlerta('alerta', 'No se pudo obtener el estado de la orden', 'error');
+    }
+  }
+
+  // Envía la transacción al microservicio de Pagos (Puerto 3004)
+  async function procesarPago() {
+    const btn = document.getElementById('btnPago');
+    const metodo = document.getElementById('metodo_pago').value;
+    btn.disabled = true;
+    btn.textContent = 'Procesando...';
+    
+    // El microservicio de pagos validará el monto y actualizará el estado de la orden a 'pagada' si corresponde
+    const res = await pagos.post('/procesar', { 
+      id_orden: orderId, 
+      metodo_pago: metodo, 
+      monto: montoPendiente 
+    });
+    
+    // Si el microservicio devuelve un ID de transacción, el pago fue exitoso
+    if (res.transaccion) {
+      document.getElementById('contenido-pago').innerHTML = `
+        <div style="color:var(--success); font-size:4rem; margin-bottom:1rem">✓</div>
+        <h2>${res.mensaje}</h2>
+        <p style="color:var(--gray-500)">ID Transacción: ${res.transaccion}</p>
+        <div style="margin:2rem 0; padding:1rem; background:var(--gray-100); border-radius:12px">
+          <p style="font-size:0.9rem">Saldo restante: <strong>${formatPeso(res.saldo_restante)}</strong></p>
+        </div>
+        <a href="catalogo.html" class="btn btn-primary">Volver al catálogo</a>
+      `;
+    } else {
+      // Maneja errores de validación del microservicio (ej: saldo insuficiente o error de red)
+      mostrarAlerta('alerta', res.error || 'Error en el pago', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Pagar ahora';
+    }
+  }
+
+  // Inicializa la carga de datos al abrir la página
+  cargarEstadoCuenta();
+</script>
+</body>
+</html>
