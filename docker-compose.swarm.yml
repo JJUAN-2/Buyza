@@ -1,13 +1,16 @@
 version: "3.8"
+
 networks:
   buyza-net:
     driver: overlay
+
 volumes:
   data-usuarios:
   data-catalogo:
   data-ordenes:
   data-pagos:
   data-credito:
+
 services:
   db-usuarios:
     image: mysql:8.0
@@ -22,6 +25,7 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
+
   db-catalogo:
     image: mysql:8.0
     environment:
@@ -35,6 +39,7 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
+
   db-ordenes:
     image: mysql:8.0
     environment:
@@ -48,6 +53,7 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
+
   db-pagos:
     image: mysql:8.0
     environment:
@@ -61,6 +67,7 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
+
   db-credito:
     image: mysql:8.0
     environment:
@@ -74,6 +81,7 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
+
   ms-usuarios:
     image: buyza/ms-usuarios:latest
     environment:
@@ -82,6 +90,7 @@ services:
       DB_PASS: ""
       DB_NAME: buyza_usuarios
       PORT: 3001
+      JWT_SECRET: PassMarketplace0001
     ports:
       - "3001:3001"
     networks:
@@ -93,6 +102,7 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
+
   ms-catalogo:
     image: buyza/ms-catalogo:latest
     environment:
@@ -101,6 +111,7 @@ services:
       DB_PASS: ""
       DB_NAME: buyza_catalogo
       PORT: 3002
+      JWT_SECRET: PassMarketplace0001
     ports:
       - "3002:3002"
     networks:
@@ -112,6 +123,7 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
+
   ms-ordenes:
     image: buyza/ms-ordenes:latest
     environment:
@@ -122,6 +134,7 @@ services:
       URL_CATALOGO: http://ms-catalogo:3002
       URL_PAGOS: http://ms-pagos:3004
       PORT: 3003
+      JWT_SECRET: PassMarketplace0001
     ports:
       - "3003:3003"
     networks:
@@ -133,6 +146,7 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
+
   ms-pagos:
     image: buyza/ms-pagos:latest
     environment:
@@ -141,6 +155,7 @@ services:
       DB_PASS: ""
       DB_NAME: buyza_pagos
       PORT: 3004
+      JWT_SECRET: PassMarketplace0001
     ports:
       - "3004:3004"
     networks:
@@ -152,6 +167,7 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
+
   ms-credito:
     image: buyza/ms-credito:latest
     environment:
@@ -160,6 +176,7 @@ services:
       DB_PASS: ""
       DB_NAME: buyza_credito
       PORT: 3005
+      JWT_SECRET: PassMarketplace0001
     ports:
       - "3005:3005"
     networks:
@@ -171,6 +188,7 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
+
   frontend:
     image: buyza/frontend:latest
     ports:
@@ -181,6 +199,7 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
+
   haproxy:
     image: haproxy:2.8
     ports:
