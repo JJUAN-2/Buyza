@@ -1,28 +1,11 @@
 FROM python:3.11-slim
-
-# Instalar Java (requerido por PySpark)
-RUN apt-get update && apt-get install -y \
-    default-jdk-headless \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Configurar JAVA_HOME
+RUN apt-get update && apt-get install -y default-jdk-headless curl && rm -rf /var/lib/apt/lists/*
 ENV JAVA_HOME=/usr/lib/jvm/default-java
-ENV PATH="${JAVA_HOME}/bin:${PATH}"
-
-# Instalar PySpark
-RUN pip install --no-cache-dir \
-    pyspark==3.5.1 \
-    pandas==2.2.2
-
+RUN pip install --no-cache-dir pyspark==3.5.1 matplotlib pandas
+RUN mkdir -p /root/.ivy2/jars
+RUN curl -L -o /root/.ivy2/jars/mysql-connector-java-8.0.33.jar \
+    https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.33/mysql-connector-java-8.0.33.jar
 WORKDIR /app
-
 COPY analisis_spark.py .
-
-# Directorios para datos y resultados
-RUN mkdir -p /spark-data /spark-results
-
-ENV SPARK_DATA_DIR=/spark-data
-ENV SPARK_RESULTS_DIR=/spark-results
-
+RUN mkdir -p /spark-results
 CMD ["python", "analisis_spark.py"]
