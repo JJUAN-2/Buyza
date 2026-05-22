@@ -148,8 +148,13 @@ const ajustarCupo = async (req, res) => {
   const { usuario_id } = req.params;
   const { cupo_total } = req.body;
   try {
-    const db = require('../config/db');
-    await db.query('UPDATE creditos SET cupo_total = ?, cupo_disponible = ? WHERE usuario_id = ?', [cupo_total, cupo_total, usuario_id]);
+    const credito = await creditoModel.obtenerCreditoUsuario(usuario_id);
+    if (credito) {
+      const db = require('../config/db');
+      await db.query('UPDATE creditos SET cupo_total = ?, cupo_disponible = ? WHERE usuario_id = ?', [cupo_total, cupo_total, usuario_id]);
+    } else {
+      await creditoModel.crearCreditoUsuario(usuario_id, cupo_total);
+    }
     res.json({ mensaje: 'Cupo ajustado correctamente' });
   } catch (err) {
     res.status(500).json({ error: err.message });

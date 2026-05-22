@@ -9,6 +9,7 @@ const api = {
       method,
       headers: { 'Content-Type': 'application/json' }
     };
+
     if (token) options.headers['Authorization'] = `Bearer ${token}`;
     if (data) options.body = JSON.stringify(data);
     const cleanBase = base.endsWith('/') ? base : `${base}/`;
@@ -46,9 +47,10 @@ const api = {
 };
 
 const usuarios = {
-  post: (ep, data) => api.post(ep, data, CONFIG.USUARIOS_URL),
-  get:  (ep = '')  => api.get(ep, CONFIG.USUARIOS_URL),
-  put:  (ep, data) => api.put(ep, data, CONFIG.USUARIOS_URL),
+  post:   (ep, data) => api.post(ep, data, CONFIG.USUARIOS_URL),
+  get:    (ep = '')  => api.get(ep, CONFIG.USUARIOS_URL),
+  put:    (ep, data) => api.put(ep, data, CONFIG.USUARIOS_URL),
+  delete: (ep)       => api.delete(ep, CONFIG.USUARIOS_URL),
 };
 
 const creditos = {

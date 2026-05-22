@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const registrar = async (req, res) => {
     const { nombre, email, password, rol } = req.body;
     try {
+        console.log("Hola mundo", nombre, email, password, rol);
         // Verificar si el email ya existe
         const [existe] = await db.execute('SELECT id FROM usuarios WHERE email = ?', [email]);
         if (existe.length > 0) return res.status(400).json({ error: 'El email ya está registrado' });
