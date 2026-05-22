@@ -1,9 +1,9 @@
 version: "3.8"
-
+ 
 networks:
   buyza-net:
     driver: overlay
-
+ 
 volumes:
   spark-results:
   data-usuarios:
@@ -11,7 +11,7 @@ volumes:
   data-ordenes:
   data-pagos:
   data-credito:
-
+ 
 configs:
   init-usuarios:
     file: ./usuarios_real_backup.sql
@@ -23,7 +23,7 @@ configs:
     file: ./pagos_export.sql
   init-credito:
     file: ./credito_export.sql
-
+ 
 services:
   db-usuarios:
     image: mysql:8.0
@@ -42,7 +42,7 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
-
+ 
   db-catalogo:
     image: mysql:8.0
     environment:
@@ -60,7 +60,7 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
-
+ 
   db-ordenes:
     image: mysql:8.0
     environment:
@@ -78,7 +78,7 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
-
+ 
   db-pagos:
     image: mysql:8.0
     environment:
@@ -96,7 +96,7 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
-
+ 
   db-credito:
     image: mysql:8.0
     environment:
@@ -114,13 +114,13 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
-
+ 
   ms-usuarios:
     image: buyza/ms-usuarios:latest
     environment:
       DB_HOST: db-usuarios
       DB_USER: root
-      DB_PASS: ""
+      DB_PASSWORD: ""          # FIX: era DB_PASS, no coincidía con db.js
       DB_NAME: buyza_usuarios
       PORT: 3001
       JWT_SECRET: PassMarketplace0001
@@ -135,13 +135,13 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
-
+ 
   ms-catalogo:
     image: buyza/ms-catalogo:latest
     environment:
       DB_HOST: db-catalogo
       DB_USER: root
-      DB_PASS: ""
+      DB_PASSWORD: ""          # FIX: era DB_PASS
       DB_NAME: buyza_catalogo
       PORT: 3002
       JWT_SECRET: PassMarketplace0001
@@ -156,16 +156,16 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
-
+ 
   ms-ordenes:
     image: buyza/ms-ordenes:latest
     environment:
       DB_HOST: db-ordenes
       DB_USER: root
-      DB_PASS: ""
+      DB_PASSWORD: ""          # FIX: era DB_PASS
       DB_NAME: buyza_ordenes
       URL_CATALOGO: http://buyza_ms-catalogo:3002/api/catalogo
-      URL_PAGOS: http://buyza_ms-pagos:3004
+      URL_CREDITO: http://buyza_ms-credito:3005/api/credito   # FIX: faltaba esta variable
       PORT: 3003
       JWT_SECRET: PassMarketplace0001
     ports:
@@ -179,14 +179,16 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
-
+ 
   ms-pagos:
     image: buyza/ms-pagos:latest
     environment:
       DB_HOST: db-pagos
       DB_USER: root
-      DB_PASS: ""
+      DB_PASSWORD: ""          # FIX: era DB_PASS
       DB_NAME: buyza_pagos
+      URL_ORDENES: http://buyza_ms-ordenes:3003/api/ordenes   # FIX: faltaba
+      URL_CREDITO: http://buyza_ms-credito:3005/api/credito   # FIX: faltaba
       PORT: 3004
       JWT_SECRET: PassMarketplace0001
     ports:
@@ -200,13 +202,13 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
-
+ 
   ms-credito:
     image: buyza/ms-credito:latest
     environment:
       DB_HOST: db-credito
       DB_USER: root
-      DB_PASS: ""
+      DB_PASSWORD: ""          # FIX: era DB_PASS
       DB_NAME: buyza_credito
       PORT: 3005
       JWT_SECRET: PassMarketplace0001
@@ -221,7 +223,7 @@ services:
       update_config:
         parallelism: 1
         delay: 10s
-
+ 
   frontend:
     image: buyza/frontend:latest
     ports:
@@ -232,7 +234,7 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
-
+ 
   haproxy:
     image: haproxy:2.8
     ports:
@@ -247,6 +249,7 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
+ 
   ms-estadisticas:
     image: buyza/ms-estadisticas:latest
     environment:
@@ -270,4 +273,4 @@ services:
         condition: on-failure
       placement:
         constraints:
-          - node.role == manager
+        - node.role == manager

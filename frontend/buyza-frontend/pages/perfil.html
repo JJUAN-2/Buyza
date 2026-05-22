@@ -156,7 +156,8 @@
 
   async function cargarCredito() {
     try {
-      const data = await credito.get('');
+      // FIX: era "credito.get" pero el objeto en api.js se llama "creditos" (plural)
+      const data = await creditos.get('');
       if (!data || data.error) return;
 
       const cupoTotal = parseFloat(data.cupo_total) || 0;

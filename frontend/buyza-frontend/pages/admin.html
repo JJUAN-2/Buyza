@@ -137,24 +137,16 @@
 
     .admin-badge { background: var(--primary-light); color: var(--primary); padding: 0.4rem 1rem; border-radius: 50px; font-size: 0.8rem; font-weight: 700; }
 
-    /* Seccion creditos */
-    .seccion-creditos {
-      margin-top: 2rem;
-    }
+    .seccion-creditos { margin-top: 2rem; }
     .seccion-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-      gap: 0.75rem;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;
     }
     .seccion-header h3 { font-size: 1rem; font-weight: 700; }
 
     .cupo-bar-bg { height: 6px; background: var(--gray-200); border-radius: 99px; overflow: hidden; margin-top: 4px; }
     .cupo-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #6c63ff, #574fd6); transition: width 1s ease; }
 
-    /* Modal ajuste cupo */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(4px); }
     .modal-overlay.show { display: flex; }
     .modal { background: white; border-radius: var(--radius); padding: 2rem; width: 100%; max-width: 400px; animation: fadeUp 0.3s ease forwards; }
@@ -518,8 +510,9 @@
     document.getElementById('tablaCreditos').innerHTML =
       '<tr><td colspan="8" style="text-align:center; color:var(--gray-400); padding:2rem">Cargando creditos...</td></tr>';
 
+    // FIX: reemplazadas las IPs hardcodeadas por CONFIG.CREDITO_URL
     const resultados = await Promise.allSettled(
-      compradores.map(u => api.get(`/admin/usuario/${u.id}`, 'http://192.168.100.2:3005/api/credito'))
+      compradores.map(u => api.get(`/admin/usuario/${u.id}`, CONFIG.CREDITO_URL))
     );
 
     const filas = compradores.map((u, i) => {
@@ -583,7 +576,8 @@
     const btn = document.getElementById('btnConfirmarAjuste');
     btn.disabled = true; btn.textContent = 'Guardando...';
     try {
-      const res = await api.put(`/admin/usuario/${usuarioAjusteId}/ajustar`, { cupo_total }, 'http://192.168.100.2:3005/api/credito');
+      // FIX: reemplazada IP hardcodeada por CONFIG.CREDITO_URL
+      const res = await api.put(`/admin/usuario/${usuarioAjusteId}/ajustar`, { cupo_total }, CONFIG.CREDITO_URL);
       if (res.error) throw new Error(res.error);
       cerrarModal();
       mostrarAlerta('alertaCredito', res.mensaje || 'Cupo ajustado correctamente', 'success');
