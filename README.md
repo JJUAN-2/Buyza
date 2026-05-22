@@ -253,8 +253,5 @@ Si quieres, en el siguiente paso te puedo dejar el README aún más pro (nivel p
 * flujo visual tipo UML
 * y narrativa para sustentar el proyecto 🔥
 =======
-# Buyza_Herrera
->>>>>>> 9342c3e2d63cf6cacadfc61ffa3af6fc90a9f92f
-=======
 # Buyza
 >>>>>>> d06cd9293664ea0def0c4c85998b397f30f9fd20
