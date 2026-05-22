@@ -46,9 +46,10 @@ const api = {
 };
 
 const usuarios = {
-  post: (ep, data) => api.post(ep, data, CONFIG.USUARIOS_URL),
-  get:  (ep = '')  => api.get(ep, CONFIG.USUARIOS_URL),
-  put:  (ep, data) => api.put(ep, data, CONFIG.USUARIOS_URL),
+  post:   (ep, data) => api.post(ep, data, CONFIG.USUARIOS_URL),
+  get:    (ep = '')  => api.get(ep, CONFIG.USUARIOS_URL),
+  put:    (ep, data) => api.put(ep, data, CONFIG.USUARIOS_URL),
+  delete: (ep)       => api.delete(ep, CONFIG.USUARIOS_URL),
 };
 
 const creditos = {
