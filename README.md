@@ -11,7 +11,7 @@ El sistema implementa autenticación con **JWT**, control de roles y comunicaci�
 ---
 
 ## 🧩 Arquitectura
-![Arquitectura](diagram-export-21-4-2026-9_19_01-p.-m..png)
+![Arquitectura](Arquitectura.jpeg)
 
 El sistema está dividido en los siguientes microservicios:
 
