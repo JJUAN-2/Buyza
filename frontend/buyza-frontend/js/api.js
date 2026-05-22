@@ -9,6 +9,7 @@ const api = {
       method,
       headers: { 'Content-Type': 'application/json' }
     };
+
     if (token) options.headers['Authorization'] = `Bearer ${token}`;
     if (data) options.body = JSON.stringify(data);
     const cleanBase = base.endsWith('/') ? base : `${base}/`;
