@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard de Estadísticas - Buyza</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --primary: #6c63ff; --primary-dark: #5046e5; --primary-light: #ede9ff;
+      --secondary: #ff6584; --success: #22c55e; --warning: #f59e0b;
+      --danger: #ef4444; --dark: #1a1a2e; --white: #fff;
+      --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-600: #6b7280; --gray-800: #1f2937;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.08); --shadow-md: 0 4px 16px rgba(0,0,0,.1);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,.12); --radius: 16px; --radius-sm: 10px;
+      --transition: all .2s ease;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f7f8fc; color: var(--dark); }
+
+    /* Navbar */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2.5rem; height: 70px;
+      background: rgba(255,255,255,0.9); backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(108,99,255,0.08);
+      box-shadow: var(--shadow-sm);
+    }
+    .navbar-brand {
+      font-size: 1.5rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .nav-links { display: flex; gap: 0.5rem; align-items: center; }
+    .nav-link {
+      padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none;
+      font-size: 0.88rem; font-weight: 500; color: var(--gray-600); transition: var(--transition);
+    }
+    .nav-link:hover, .nav-link.active { background: var(--primary-light); color: var(--primary); }
+    .btn-logout {
+      padding: 0.45rem 1.1rem; background: var(--danger); color: #fff;
+      border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: var(--transition);
+    }
+
+    /* Layout */
+    .page { padding: 90px 2rem 3rem; max-width: 1300px; margin: 0 auto; }
+
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+    }
+    .page-header h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; }
+    .page-header p { color: var(--gray-600); font-size: 0.9rem; margin-top: 0.2rem; }
+
+    .badge-spark {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: linear-gradient(135deg, #ff6584, #ff8fab);
+      color: #fff; padding: 0.4rem 1rem; border-radius: 50px;
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.3px;
+    }
+
+    .btn-refresh {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.6rem 1.4rem; background: var(--primary); color: #fff;
+      border: none; border-radius: 8px; font-size: 0.88rem; font-weight: 600;
+      cursor: pointer; transition: var(--transition);
+    }
+    .btn-refresh:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn-refresh:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.25rem; margin-bottom: 2rem;
+    }
+    .kpi-card {
+      background: var(--white); border-radius: var(--radius-sm);
+      padding: 1.5rem; border: 1px solid var(--gray-200);
+      transition: var(--transition); position: relative; overflow: hidden;
+    }
+    .kpi-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .kpi-card.purple::before { background: var(--primary); }
+    .kpi-card.green::before  { background: var(--success); }
+    .kpi-card.orange::before { background: var(--warning); }
+    .kpi-card.red::before    { background: var(--danger); }
+    .kpi-card.blue::before   { background: #0ea5e9; }
+    .kpi-card.pink::before   { background: var(--secondary); }
+
+    .kpi-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); }
+    .kpi-icon {
+      font-size: 1.6rem; margin-bottom: 0.75rem;
+      width: 44px; height: 44px;
+      background: var(--gray-100); border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .kpi-label { font-size: 0.78rem; color: var(--gray-600); font-weight: 500; margin-bottom: 0.35rem; }
+    .kpi-value { font-size: 2rem; font-weight: 800; letter-spacing: -1px; }
+    .kpi-value.purple { color: var(--primary); }
+    .kpi-value.green  { color: var(--success); }
+    .kpi-value.orange { color: var(--warning); }
+    .kpi-value.red    { color: var(--danger); }
+    .kpi-value.blue   { color: #0ea5e9; }
+    .kpi-value.pink   { color: var(--secondary); }
+    .kpi-sub  { font-size: 0.78rem; color: var(--gray-600); margin-top: 0.3rem; }
+
+    /* Charts grid */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 1.5rem; margin-bottom: 1.5rem;
+    }
+    .chart-card {
+      background: var(--white); border-radius: var(--radius);
+      padding: 1.75rem; border: 1px solid var(--gray-200);
+      box-shadow: var(--shadow-sm);
+    }
+    .chart-card.wide { grid-column: 1 / -1; }
+    .chart-title {
+      font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem;
+    }
+    .chart-subtitle { font-size: 0.82rem; color: var(--gray-600); margin-bottom: 1.5rem; }
+    .chart-container { position: relative; height: 280px; }
+    .chart-container.tall { height: 340px; }
+
+    /* Tabla top productos */
+    .top-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    .top-table th {
+      text-align: left; font-size: 0.75rem; font-weight: 700;
+      color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.4px;
+      padding: 0.6rem 0.75rem; border-bottom: 2px solid var(--gray-200);
+    }
+    .top-table td {
+      padding: 0.7rem 0.75rem; font-size: 0.88rem;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .top-table tr:last-child td { border-bottom: none; }
+    .top-table tr:hover td { background: var(--gray-100); }
+    .rank-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--primary-light); color: var(--primary);
+      font-size: 0.75rem; font-weight: 700;
+    }
+
+    /* Source tag */
+    .source-tag {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      font-size: 0.75rem; color: var(--gray-600);
+      background: var(--gray-100); padding: 0.2rem 0.65rem;
+      border-radius: 50px; margin-left: 0.75rem;
+    }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+    .dot.spark { background: var(--secondary); }
+
+    /* Loading skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite; border-radius: 8px;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+    .skeleton-kpi { height: 80px; width: 100%; }
+    .skeleton-chart { height: 280px; width: 100%; }
+
+    /* Alert */
+    .alert { padding: 1rem 1.25rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.88rem; }
+    .alert-error { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+    .alert-info  { background: var(--primary-light); color: var(--primary-dark); border: 1px solid rgba(108,99,255,.2); }
+
+    /* Spark section */
+    .spark-section {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-radius: var(--radius); padding: 2rem; margin-bottom: 1.5rem;
+      color: #fff;
+    }
+    .spark-section h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem; }
+    .spark-section p  { font-size: 0.85rem; opacity: 0.7; margin-bottom: 1.5rem; }
+    .spark-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem;
+    }
+    .spark-stat {
+      background: rgba(255,255,255,0.07); border-radius: 10px; padding: 1rem;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .spark-stat-label { font-size: 0.72rem; opacity: 0.6; margin-bottom: 0.35rem; }
+    .spark-stat-value { font-size: 1.5rem; font-weight: 800; }
+    .spark-stat-value.accent { color: #ff6584; }
+    .spark-timestamp { font-size: 0.72rem; opacity: 0.5; margin-top: 1rem; }
+
+    @media (max-width: 640px) {
+      .page { padding: 80px 1rem 2rem; }
+      .charts-grid { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <span class="navbar-brand">Buyza</span>
+  <div class="nav-links">
+    <a href="catalogo.html"   class="nav-link">Catálogo</a>
+    <a href="perfil.html"     class="nav-link">Mi perfil</a>
+    <a href="estadisticas.html" class="nav-link active">Estadísticas</a>
+    <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1>📊 Dashboard de Estadísticas
+        <span class="source-tag">
+          <span class="dot" id="dot-status"></span>
+          <span id="fuente-label">cargando...</span>
+        </span>
+      </h1>
+      <p>Análisis del marketplace en tiempo real + procesamiento distribuido con PySpark</p>
+    </div>
+    <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+      <span class="badge-spark">⚡ Apache Spark</span>
+      <button class="btn-refresh" id="btn-refresh" onclick="cargarTodo()">
+        🔄 Actualizar datos
+      </button>
+    </div>
+  </div>
+
+  <div id="alert-box" class="alert alert-info" style="display:none;"></div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid" id="kpi-grid">
+    <div class="skeleton skeleton-kpi"></div>
+    <div class="skeleton skeleton-kpi"></div>
+    <div class="skeleton skeleton-kpi"></div>
+    <div class="skeleton skeleton-kpi"></div>
+    <div class="skeleton skeleton-kpi"></div>
+    <div class="skeleton skeleton-kpi"></div>
+  </div>
+
+  <!-- Resultados Spark (si disponibles) -->
+  <div id="spark-section" class="spark-section" style="display:none;">
+    <h2>⚡ Análisis PySpark — Procesamiento Distribuido</h2>
+    <p>Resultados del último análisis ejecutado con Apache Spark en modo local distribuido</p>
+    <div class="spark-grid" id="spark-grid"></div>
+    <div class="spark-timestamp" id="spark-timestamp"></div>
+  </div>
+
+  <!-- Gráficas fila 1 -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">📈 Ingresos por Mes</div>
+      <div class="chart-subtitle">Evolución de ventas pagadas en el tiempo</div>
+      <div class="chart-container">
+        <canvas id="chart-ventas-mes"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">👥 Distribución de Usuarios</div>
+      <div class="chart-subtitle">Compradores, vendedores y administradores</div>
+      <div class="chart-container">
+        <canvas id="chart-usuarios-rol"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráficas fila 2 -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">🧾 Estado de Órdenes</div>
+      <div class="chart-subtitle">Distribución por estado actual</div>
+      <div class="chart-container">
+        <canvas id="chart-estados-ordenes"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">💳 Métodos de Pago</div>
+      <div class="chart-subtitle">Preferencias de pago de los compradores</div>
+      <div class="chart-container">
+        <canvas id="chart-metodos-pago"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top productos (tabla) -->
+  <div class="chart-card wide" style="margin-bottom:1.5rem;">
+    <div class="chart-title">🏆 Top Productos Más Vendidos</div>
+    <div class="chart-subtitle">Ranking por unidades vendidas y total de ingresos generados</div>
+    <div id="tabla-top-productos">
+      <div class="skeleton" style="height:180px;border-radius:8px;"></div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script src="../js/config.js"></script>
+<script>
+// ─── Config ────────────────────────────────────────────────────────────────
+const BASE_STATS = (window.CONFIG && CONFIG.BASE_ESTADISTICAS)
+  ? CONFIG.BASE_ESTADISTICAS
+  : 'http://192.168.100.2:3006/api/estadisticas';
+
+let charts = {};
+
+function cerrarSesion() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('usuario');
+  window.location.href = 'login.html';
+}
+
+// ─── Formatear números ────────────────────────────────────────────────────
+function fmtMoney(n) {
+  return '$' + parseFloat(n || 0).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+function fmtNum(n) { return parseInt(n || 0).toLocaleString('es-CO'); }
+
+// ─── Destruir chart anterior ──────────────────────────────────────────────
+function crearChart(id, config) {
+  if (charts[id]) charts[id].destroy();
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, config);
+}
+
+// ─── Colores del tema ─────────────────────────────────────────────────────
+const COLORS = {
+  primary: '#6c63ff', secondary: '#ff6584', success: '#22c55e',
+  warning: '#f59e0b', info: '#0ea5e9', purple: '#a855f7',
+  palette: ['#6c63ff','#ff6584','#22c55e','#f59e0b','#0ea5e9','#a855f7','#f97316']
+};
+
+// ─── Renderizar KPIs ──────────────────────────────────────────────────────
+function renderKPIs(r) {
+  const kpis = [
+    { icon: '👤', label: 'Usuarios totales',   value: fmtNum(r.total_usuarios),        color: 'purple' },
+    { icon: '📦', label: 'Productos activos',  value: fmtNum(r.total_productos),       color: 'blue'   },
+    { icon: '🧾', label: 'Órdenes totales',    value: fmtNum(r.total_ordenes),         color: 'orange' },
+    { icon: '✅', label: 'Órdenes pagadas',    value: fmtNum(r.ordenes_pagadas),       color: 'green'  },
+    { icon: '💰', label: 'Ingresos totales',   value: fmtMoney(r.ingresos_totales),    color: 'green'  },
+    { icon: '💳', label: 'Pagos procesados',   value: fmtMoney(r.monto_total_pagado),  color: 'pink'   }
+  ];
+  document.getElementById('kpi-grid').innerHTML = kpis.map(k => `
+    <div class="kpi-card ${k.color}">
+      <div class="kpi-icon">${k.icon}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value ${k.color}">${k.value}</div>
+    </div>`).join('');
+}
+
+// ─── Sección Spark ────────────────────────────────────────────────────────
+function renderSpark(spark) {
+  if (!spark || !spark.resumen) return;
+  const section = document.getElementById('spark-section');
+  section.style.display = 'block';
+  const r = spark.resumen;
+  const stats = [
+    { label: 'Usuarios (Spark)', value: fmtNum(r.total_usuarios) },
+    { label: 'Ingresos calculados', value: fmtMoney(r.ingresos_totales), accent: true },
+    { label: 'Órdenes procesadas', value: fmtNum(r.total_ordenes) },
+    { label: 'Pagos analizados', value: fmtNum(r.total_pagos) },
+    { label: 'Versión Spark', value: spark.spark_version || '3.5' }
+  ];
+  document.getElementById('spark-grid').innerHTML = stats.map(s => `
+    <div class="spark-stat">
+      <div class="spark-stat-label">${s.label}</div>
+      <div class="spark-stat-value ${s.accent ? 'accent' : ''}">${s.value}</div>
+    </div>`).join('');
+  document.getElementById('spark-timestamp').textContent =
+    `⚡ Análisis generado: ${new Date(spark.generado_en).toLocaleString('es-CO')}`;
+}
+
+// ─── Gráfica: Ventas por mes ──────────────────────────────────────────────
+function renderVentasMes(data) {
+  if (!data || !data.length) return;
+  crearChart('chart-ventas-mes', {
+    type: 'bar',
+    data: {
+      labels: data.map(d => d.mes),
+      datasets: [{
+        label: 'Ingresos ($)',
+        data: data.map(d => parseFloat(d.ingresos || 0)),
+        backgroundColor: COLORS.primary + 'cc',
+        borderColor: COLORS.primary,
+        borderWidth: 2,
+        borderRadius: 6
+      }, {
+        label: 'Número de órdenes',
+        data: data.map(d => d.ordenes || d.num_ordenes || 0),
+        type: 'line',
+        borderColor: COLORS.secondary,
+        backgroundColor: 'transparent',
+        borderWidth: 2.5,
+        pointBackgroundColor: COLORS.secondary,
+        pointRadius: 4,
+        yAxisID: 'y2'
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        y:  { beginAtZero: true, title: { display: true, text: 'Ingresos ($)' } },
+        y2: { beginAtZero: true, position: 'right', title: { display: true, text: 'Órdenes' },
+               grid: { drawOnChartArea: false } }
+      }
+    }
+  });
+}
+
+// ─── Gráfica: Distribución roles ──────────────────────────────────────────
+function renderRoles(data) {
+  if (!data || !data.length) return;
+  const labels = { comprador: 'Compradores', vendedor: 'Vendedores', admin: 'Administradores' };
+  crearChart('chart-usuarios-rol', {
+    type: 'doughnut',
+    data: {
+      labels: data.map(d => labels[d.rol] || d.rol),
+      datasets: [{
+        data: data.map(d => d.cantidad),
+        backgroundColor: [COLORS.primary, COLORS.success, COLORS.warning],
+        borderWidth: 3, borderColor: '#fff', hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: {
+          label: ctx => ` ${ctx.label}: ${ctx.raw} usuarios`
+        }}
+      },
+      cutout: '60%'
+    }
+  });
+}
+
+// ─── Gráfica: Estados de órdenes ─────────────────────────────────────────
+function renderEstadosOrdenes(data) {
+  if (!data || !data.length) return;
+  const colores = { pagada: COLORS.success, pendiente: COLORS.warning, cancelada: COLORS.secondary };
+  crearChart('chart-estados-ordenes', {
+    type: 'doughnut',
+    data: {
+      labels: data.map(d => d.estado.charAt(0).toUpperCase() + d.estado.slice(1)),
+      datasets: [{
+        data: data.map(d => d.cantidad),
+        backgroundColor: data.map(d => colores[d.estado] || COLORS.info),
+        borderWidth: 3, borderColor: '#fff', hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: {
+          label: ctx => ` ${ctx.label}: ${ctx.raw} órdenes`
+        }}
+      },
+      cutout: '60%'
+    }
+  });
+}
+
+// ─── Gráfica: Métodos de pago ─────────────────────────────────────────────
+function renderMetodosPago(data) {
+  if (!data || !data.length) return;
+  crearChart('chart-metodos-pago', {
+    type: 'bar',
+    data: {
+      labels: data.map(d => d.metodo_pago || d.metodo),
+      datasets: [{
+        label: 'Número de usos',
+        data: data.map(d => d.usos),
+        backgroundColor: COLORS.palette.slice(0, data.length).map(c => c + 'cc'),
+        borderColor: COLORS.palette.slice(0, data.length),
+        borderWidth: 2, borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+      indexAxis: 'y'
+    }
+  });
+}
+
+// ─── Tabla: Top productos ─────────────────────────────────────────────────
+function renderTopProductos(data) {
+  if (!data || !data.length) {
+    document.getElementById('tabla-top-productos').innerHTML =
+      '<p style="color:var(--gray-600);font-size:0.9rem;padding:1rem 0;">No hay datos de ventas disponibles aún.</p>';
+    return;
+  }
+  document.getElementById('tabla-top-productos').innerHTML = `
+    <table class="top-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Producto</th>
+          <th>Unidades vendidas</th>
+          <th>Ingresos generados</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.map((p, i) => `
+          <tr>
+            <td><span class="rank-badge">${i + 1}</span></td>
+            <td><strong>${p.nombre || `Producto #${p.id_producto || p.id}`}</strong></td>
+            <td>${fmtNum(p.unidades_vendidas || p.unidades)}</td>
+            <td style="color:var(--success);font-weight:700;">${fmtMoney(p.ingresos)}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+// ─── Carga principal ──────────────────────────────────────────────────────
+async function cargarTodo() {
+  const btn = document.getElementById('btn-refresh');
+  btn.disabled = true; btn.textContent = '⏳ Cargando...';
+
+  const alertBox = document.getElementById('alert-box');
+  alertBox.style.display = 'none';
+
+  try {
+    const token = localStorage.getItem('token');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+    const res = await fetch(`${BASE_STATS}/completo`, { headers });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    // Fuente tag
+    const fuente = data.fuente || 'realtime';
+    document.getElementById('fuente-label').textContent = fuente.includes('spark') ? 'Spark + Tiempo real' : 'Tiempo real';
+    document.getElementById('dot-status').className = 'dot' + (fuente.includes('spark') ? ' spark' : '');
+
+    const rt = data.realtime;
+
+    // KPIs desde resumen
+    const resResumen = await fetch(`${BASE_STATS}/resumen`, { headers });
+    if (resResumen.ok) {
+      const resumen = await resResumen.json();
+      renderKPIs(resumen.resumen);
+    }
+
+    // Spark section
+    if (data.spark) renderSpark(data.spark);
+
+    // Gráficas
+    if (rt.ventas_por_mes)     renderVentasMes(rt.ventas_por_mes);
+    if (rt.usuarios_por_rol)   renderRoles(rt.usuarios_por_rol);
+    if (rt.ordenes_por_estado) renderEstadosOrdenes(rt.ordenes_por_estado);
+    if (rt.metodos_pago)       renderMetodosPago(rt.metodos_pago);
+
+    // Top productos (combinar Spark + realtime)
+    const topData = (data.spark && data.spark.top_productos && data.spark.top_productos.length)
+      ? data.spark.top_productos
+      : rt.top_productos;
+    renderTopProductos(topData);
+
+  } catch (err) {
+    alertBox.className = 'alert alert-error';
+    alertBox.innerHTML = `⚠️ No se pudo conectar con el microservicio de estadísticas.<br>
+      <small>Verifica que <code>ms-estadisticas</code> esté corriendo en el puerto 3006. Error: ${err.message}</small>`;
+    alertBox.style.display = 'block';
+
+    // Mostrar datos de demo si falla
+    renderKPIsDemo();
+  } finally {
+    btn.disabled = false; btn.textContent = '🔄 Actualizar datos';
+  }
+}
+
+function renderKPIsDemo() {
+  const demo = {
+    total_usuarios: 19, total_productos: 13, total_ordenes: 7,
+    ordenes_pagadas: 2, ingresos_totales: 1998, monto_total_pagado: 6643.98
+  };
+  renderKPIs(demo);
+}
+
+// ─── Inicializar ──────────────────────────────────────────────────────────
+const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+if (!usuario || !usuario.id) {
+  window.location.href = 'login.html';
+} else {
+  cargarTodo();
+  // Auto-refresh cada 60 segundos
+  setInterval(cargarTodo, 60000);
+}
+</script>
+</body>
+</html>

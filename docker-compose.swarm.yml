@@ -5,6 +5,7 @@ networks:
     driver: overlay
 
 volumes:
+  spark-results:
   data-usuarios:
   data-catalogo:
   data-ordenes:
@@ -246,3 +247,27 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
+  ms-estadisticas:
+    image: buyza/ms-estadisticas:latest
+    environment:
+      PORT: 3006
+      DB_USER: root
+      DB_PASSWORD: ""
+      DB_HOST_USUARIOS: db-usuarios
+      DB_HOST_CATALOGO: db-catalogo
+      DB_HOST_ORDENES:  db-ordenes
+      DB_HOST_PAGOS:    db-pagos
+      DB_HOST_CREDITO:  db-credito
+    volumes:
+      - spark-results:/spark-results
+    ports:
+      - "3006:3006"
+    networks:
+      - buyza-net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.role == manager
