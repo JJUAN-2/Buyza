@@ -131,8 +131,8 @@ services:
       DB_USER: root
       DB_PASS: ""
       DB_NAME: buyza_ordenes
-      URL_CATALOGO: http://ms-catalogo:3002
-      URL_PAGOS: http://ms-pagos:3004
+      URL_CATALOGO: http://buyza_ms-catalogo:3002
+      URL_PAGOS: http://buyza_ms-pagos:3004
       PORT: 3003
       JWT_SECRET: PassMarketplace0001
     ports:
