@@ -10,6 +10,7 @@ volumes:
   data-ordenes:
   data-pagos:
   data-credito:
+  spark-results:    # Volumen compartido entre Spark y ms-estadisticas
 
 configs:
   init-usuarios:
@@ -246,3 +247,47 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
+
+  ms-estadisticas:
+    image: buyza/ms-estadisticas:latest
+    environment:
+      PORT: 3006
+      DB_USER: root
+      DB_PASSWORD: ""
+      DB_HOST_USUARIOS: db-usuarios
+      DB_HOST_CATALOGO: db-catalogo
+      DB_HOST_ORDENES:  db-ordenes
+      DB_HOST_PAGOS:    db-pagos
+      DB_HOST_CREDITO:  db-credito
+      SPARK_RESULTS_FILE: /spark-results/estadisticas.json
+    volumes:
+      - spark-results:/spark-results
+    ports:
+      - "3006:3006"
+    networks:
+      - buyza-net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.role == manager
+
+  spark-analytics:
+    image: buyza/spark-analytics:latest
+    volumes:
+      - spark-results:/spark-results
+      - ./spark-data:/spark-data:ro
+    environment:
+      SPARK_DATA_DIR: /spark-data
+      SPARK_RESULTS_DIR: /spark-results
+    networks:
+      - buyza-net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: none
+      placement:
+        constraints:
+          - node.role == manager
