@@ -22,7 +22,8 @@ router.post('/crear', verificarToken, async (req, res) => {
 
         let prodInfo;
         try {
-            const resp = await axios.get(`${CATALOGO_URL}/api/catalogo/${id_producto}`, axiosConfig);
+            // ✅ FIX: eliminada la duplicación de /api/catalogo en la URL
+            const resp = await axios.get(`${CATALOGO_URL}/${id_producto}`, axiosConfig);
             prodInfo = resp.data;
         } catch (err) {
             console.error('Error consultando catálogo:', err.message);
